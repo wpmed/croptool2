@@ -300,6 +300,11 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
                 $scope.metadata = null;
                 return;
             }
+            if ( res.data?.exception?.[0]?.message ) {
+                $scope.error = res.data.exception[0].message;
+                $scope.metadata = null;
+                return;
+            }
 
             $scope.metadata = response;
 
@@ -383,7 +388,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
         }, function(res) {
             $scope.metadata = null;
-            $scope.error = res.data.error;
+            $scope.error = res.data?.exception?.[0]?.message ?? res.data.error;
             $scope.busy = false;
         });
     }
@@ -409,7 +414,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
                 height: (area[3] - area[1]) / pixelratio[1]
             });
         }, function(res) {
-            $scope.error = 'An error occurred: ' + res.status + ' ' + res.data.error;
+            $scope.error = 'An error occurred: ' + res.status + ' ' +
+                ( res.data?.exception?.[0]?.message ?? res.data.error );
             $scope.borderLocatorBusy = false;
         });
     };
@@ -587,7 +593,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             }
             $scope.updateUploadComment();
         }, function(res) {
-            $scope.error = '[Error] ' + res.data.error;
+            $scope.error = '[Error] ' + ( res.data?.exception?.[0]?.message ?? res.data.error );
             $scope.ladda = false;
         });
 
@@ -650,7 +656,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
         }, function(res) {
             $scope.ladda2 = false;
-            $scope.error = 'Upload failed! ' + res.data.error;
+            $scope.error = 'Upload failed! ' + (res.data?.exception?.[0]?.message ?? res.data.error);
         });
 
     };
@@ -726,6 +732,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
                 if (response.error) {
                     $scope.error = response.error;
+		} else if ( res.data?.exception?.[0]?.message ) {
+			$scope.error = res.data.exception[0].message;
                 } else {
                     $scope.exists[key] = response.exists;
                     // console.log($scope.exists);
