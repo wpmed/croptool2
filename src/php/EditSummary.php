@@ -32,7 +32,7 @@ class EditSummary
 
         $res = mb_strtoupper(mb_substr($res, 0, 1)) . mb_substr($res, 1);
 
-        return $res . ' using [[Commons:CropTool|CropTool]]';
+        return $res . ' using [[Commons:CropTool|CropTool2]]';
     }
 
 }

@@ -172,7 +172,7 @@ class FileController
             'title' => $page->title,
             'pageno' => $pageno,
             'method' => $cropMethod,
-            'dim' => implode(', ', $dim) . ' using [[Commons:CropTool|CropTool]] with ' . $cropMethod . ' mode.',
+            'dim' => implode(', ', $dim) . ' using [[Commons:CropTool|CropTool2]] with ' . $cropMethod . ' mode.',
             'page' => [
                 'elems' => $options,
                 'hasAssessmentTemplates' => $page->wikitext->hasAssessmentTemplates(),
