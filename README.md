@@ -1,7 +1,9 @@
 ## CropTool
 
-[CropTool](https://croptool.toolforge.org/) is a tool for cropping image files
+[CropTool2](https://croptool2.toolforge.org/) is a tool for cropping image files
 at Wikimedia Commons and other Wikimedia sites using the MediaWiki API with OAuth.
+
+It is a fork of the original CropTool
 
 * [Help page on Commons](https://commons.wikimedia.org/wiki/Commons:CropTool).
 * [Tool info on WikiTech](https://wikitech.wikimedia.org/wiki/Tool:CropTool)
@@ -82,10 +84,10 @@ Note that you should be able to login and preview cropping without waiting for t
 * `ssh tools-login.wmflabs.org`
 * `become croptool`
 * `git pull`
-* `toolforge build start https://github.com/danmichaelo/croptool.git`
+* `toolforge build start https://github.com/wpmed/croptool2`
 * `toolforge webservice --backend=kubernetes --mount=all buildservice restart`
 
 First-time setup:
 
-- Copy `config.prod.ini` into the home directory, and add OAuth information
+- Copy `config.prod.ini` into the home directory as config.ini, and add OAuth information (Be sure to chmod the read permissions)
 - Creates a `public_files` directory in the home directory and set it to be readable and writable by others
