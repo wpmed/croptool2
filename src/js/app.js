@@ -28,7 +28,7 @@ service('LoginService', ['$http', '$rootScope', function($http, $rootScope) {
         that.loginResponse = data;
         if (typeof that.loginResponse != 'object') {
             that.loginResponse = {
-                error: 'The CropTool backend is currently having problems.',
+                error: 'The CropTool2 backend is currently having problems.',
             };
         }
         that.loginResponse.code = res.status;
@@ -784,7 +784,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             s += 'Cropped';
         }
 
-        // %s % horizontally, %s % vertically, rotated %s° using [[Commons:CropTool|CropTool]] with %s mode.
+        // %s % horizontally, %s % vertically, rotated %s° using [[Commons:CropTool|CropTool2]] with %s mode.
         s += ' ' + $scope.cropresults.dim;
 
         if ($scope.cropresults.page.elems.border) {
