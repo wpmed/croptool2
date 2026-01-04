@@ -20,7 +20,6 @@ class File implements FileInterface
     protected $logger;
     protected $pathToJpegTran;
     protected $pathToDdjvu;
-    protected $pathToMagick;
     protected $pathToGs;
 
 
@@ -42,7 +41,6 @@ class File implements FileInterface
 
         $this->pathToJpegTran = $config->get('jpegtranPath');
         $this->pathToDdjvu = $config->get('ddjvuPath');
-        $this->pathToMagick = $config->get('magickPath');
         $this->pathToGs = $config->get('gsPath');
 
         $this->fileExt = $this->getFileExt($this->mime);

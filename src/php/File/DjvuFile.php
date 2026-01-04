@@ -36,7 +36,7 @@ class DjvuFile extends File implements FileInterface
         ]);
 
         // Convert tiff to jpg
-        Command::exec($this->pathToMagick . ' {src} {dest}', [
+        Command::exec('convert {src} {dest}', [
             'src' => $tiffFile,
             'dest' => $jpgFile,
         ]);
