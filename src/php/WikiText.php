@@ -205,7 +205,7 @@ class WikiText
             [
                 '(' . implode('|', $names) . ')',
 		// Match parameters that could potentially include other templates recursively
-                ($withParams ? '(\|(?:[^\}{|]*(?<rec1>\{\{([^{}]++|(?&rec1))*\}\})[^}|{]*)(?:\|(?:[^\}{]*(?<rec>\{\{([^{}]++|(?&rec))*\}\})[^}{]*)*)?)?' : '')
+                ($withParams ? '(\|([^\}{|]*(?<rec1>\{\{(?:[^{}]++|(?&rec1))*\}\})?[^}|{]*)(?:\|(?:[^\}{]*(?<rec>\{\{(?:[^{}]++|(?&rec))*\}\})?[^}{]*)*)?)?' : '')
             ],
             $this->patterns[$type]
         );
