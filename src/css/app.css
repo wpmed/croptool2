@@ -170,3 +170,9 @@ form {
 #cropbox.imageloading {
   opacity: 0.2;
 }
+
+/* override cropper.css dependency.
+Some people complain about contrast of system cursor */
+html .cropper-crop {
+  cursor: url( '../res/crosshair.png' ) 16 16, crosshair;
+}
