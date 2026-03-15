@@ -139,6 +139,9 @@ class FileController
         ]);
 
         $dim = array();
+        if ( $pageno > 0 ) {
+            $dim[] = 'page ' . $pageno;
+	}
         if ($original->width != $crop->width) {
             $cropPercentX = round(($original->width - $crop->width) / $original->width * 100);
             $dim[] = ($cropPercentX ?: ' < 1') . '% horizontally';
