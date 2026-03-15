@@ -18,7 +18,7 @@ class WikiText
     */
     protected $assessmentTemplates = array(
         'featured[_ ]?picture', 'fp',
-        'valued[_ ]image', 'vi',
+        'valued[_ ]image', '(?-i)VI(?i)', // Important we don't count {{vi}} only {{VI}}
         'quality[_ ]?image',
         'picture[_ ]of[_ ]the[_ ]day',
         'assessments', 'featured[_ ]picture[_ ]mul',
