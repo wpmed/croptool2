@@ -141,14 +141,14 @@ class FileController
         $dim = array();
         if ($original->width != $crop->width) {
             $cropPercentX = round(($original->width - $crop->width) / $original->width * 100);
-            $dim[] = ($cropPercentX ?: ' < 1') . ' % horizontally';
+            $dim[] = ($cropPercentX ?: ' < 1') . '% horizontally';
         }
         if ($original->height != $crop->height) {
             $cropPercentY = round(($original->height - $crop->height) / $original->height * 100);
-            $dim[] = ($cropPercentY ?: ' < 1') . ' % vertically';
+            $dim[] = ($cropPercentY ?: ' < 1') . '% vertically';
         }
         $cropPercentXY = round((1 - $crop->width * $crop->height / ($original->width * $original->height)) * 100);
-        $dim[] = ($cropPercentXY ?: ' < 1') . ' % areawise';
+        $dim[] = ($cropPercentXY ?: ' < 1') . '% areawise';
         if ($rotation) {
             $dim[] = "rotated {$rotation}°";
         }
