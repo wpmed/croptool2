@@ -187,7 +187,7 @@ class File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast)
     {
         $image = new Imagick($srcPath);
 
@@ -198,6 +198,8 @@ class File implements FileInterface
         }
         $image->cropImage($coords['width'], $coords['height'], $coords['x'], $coords['y']);
         $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
+        // Apply brightness/contrast to RGB channels only, not alpha
+        $image->brightnessContrastImage($brightness, $contrast, \Imagick::CHANNEL_ALL & ~\Imagick::CHANNEL_ALPHA);
         static::saveImage($image, $destPath, $srcPath);
         $image->destroy();
     }
@@ -208,6 +210,10 @@ class File implements FileInterface
     }
 
     public function supportsRotation() {
+        return true;
+    }
+
+    public function supportsFilters() {
         return true;
     }
 

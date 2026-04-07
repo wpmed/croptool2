@@ -283,6 +283,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.busy = true;
         $scope.crop_dim = undefined;
         $scope.rotation = {angle: 0};
+        $scope.filters = {brightness: 0, contrast: 0};
 
         $http.get('./api/file/info?' + $httpParamSerializer({
             title: $scope.currentUrlParams.title,
@@ -426,6 +427,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             $scope.rotation.angle += 360;
         }
         $scope.rotation.angle = Math.round($scope.rotation.angle / 90) * 90;
+        $scope.filters.brightness = 0;
+        $scope.filters.contrast = 0;
     };
 
     function getAspectRatio() {
@@ -569,7 +572,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             y: $scope.crop_dim.y,
             rotate: $scope.crop_dim.rotate,
             width: $scope.crop_dim.w,
-            height: $scope.crop_dim.h
+            height: $scope.crop_dim.h,
+            brightness: $scope.filters.brightness,
+            contrast: $scope.filters.contrast
         }))
         .then(function(res) {
             var response = res.data;
@@ -684,6 +689,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.aspectratio_cy = LocalStorageService.get('croptool-aspectratio-y') || '9';;
     $scope.overwrite = LocalStorageService.get('croptool-overwrite') || 'overwrite';;
     $scope.rotation = {angle: 0};
+    $scope.filters = {brightness: 0, contrast: 0};
     $scope.aspectRatioChanged();
 
     // On filename change, check with the MediaWiki API if the file exists.

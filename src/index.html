@@ -293,6 +293,14 @@
                             <input ng-if="cropmethod === 'precise'" type="number" ng-model="rotation.angle" step="0.01">
                             <input ng-if="cropmethod === 'lossless'" type="range" ng-input-range ng-model="rotation.angle" min="0" step="90" max="270">
                         </label>
+                        <label ng-if="metadata.supportsFilters && cropmethod !== 'lossless'">
+                            {{ 'cropform-brightness' | translate }}
+                            <input type="number" ng-model="filters.brightness" min="-100" max="100" step="0.01">
+                        </label>
+                        <label ng-if="metadata.supportsFilters && cropmethod !== 'lossless'">
+                            {{ 'cropform-contrast' | translate }}
+                            <input type="number" ng-model="filters.contrast" min="-100" max="100" step="0.01">
+                        </label>
                     </div>
 
                     <div style="margin-bottom:.8em;">
