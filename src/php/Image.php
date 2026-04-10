@@ -170,9 +170,10 @@ class Image
      * @param $rotation
      * @param $brightness
      * @param $contrast
+     * @param $saturation
      * @return Image
      */
-    public function crop($destPath, $method, $x, $y, $width, $height, $rotation, $brightness, $contrast)
+    public function crop($destPath, $method, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation)
     {
         if (file_exists($destPath)) {
             unlink($destPath);
@@ -181,7 +182,7 @@ class Image
         // Get coords orientated in the same direction as the image:
         $coords = $this->getCropCoordinates($x, $y, $width, $height, $rotation);
 
-        $this->file->crop($this->path, $destPath, $method, $coords, $rotation, $brightness, $contrast);
+        $this->file->crop($this->path, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation);
 
         chmod($destPath, $this->filePermission);
 

@@ -44,15 +44,15 @@ class JpegFile extends File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
     {
         if ($method === 'precise') {
-            parent::crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast);
+            parent::crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation);
             return;
         }
 
-        if ($brightness != 0 || $contrast != 0) {
-            throw new \RuntimeException('Brightness/contrast not supported for lossless crop.');
+        if ($brightness != 0 || $contrast != 0 || $saturation != 0) {
+            throw new \RuntimeException('Filters not supported for lossless crop.');
         }
 
         // Lossless

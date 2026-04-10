@@ -41,6 +41,7 @@
     "cropform-aspect-ratio-fixed": "Custom",
     "cropform-brightness": "Brightness",
     "cropform-contrast": "Contrast",
+    "cropform-saturation": "Saturation",
     "cropping-progress": "Please wait while cropping...",
     "previewform-lossless": "A lossless crop was performed.",
     "previewform-lossless-explanation": "The resulting image is {{wider}} px wider and {{higher}} px higher than the region you selected. <a target=\"_blank\" href=\"{{url}}\">Why?<\/a> Note that the extra pixels included are in the left and\/or top part of the image.",

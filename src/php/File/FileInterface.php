@@ -16,7 +16,7 @@ interface FileInterface
 
     static public function readMetadata($path);
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast);
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation);
 
     static public function saveImage($im, $destPath, $srcPath);
 

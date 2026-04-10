@@ -288,7 +288,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.busy = true;
         $scope.crop_dim = undefined;
         $scope.rotation = {angle: 0};
-        $scope.filters = {brightness: 0, contrast: 0};
+        $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
 
         $http.get('./api/file/info?' + $httpParamSerializer({
             title: $scope.currentUrlParams.title,
@@ -434,6 +434,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.rotation.angle = Math.round($scope.rotation.angle / 90) * 90;
         $scope.filters.brightness = 0;
         $scope.filters.contrast = 0;
+        $scope.filters.saturation = 0;
     };
 
     function getAspectRatio() {
@@ -579,7 +580,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             width: $scope.crop_dim.w,
             height: $scope.crop_dim.h,
             brightness: $scope.filters.brightness,
-            contrast: $scope.filters.contrast
+            contrast: $scope.filters.contrast,
+            saturation: $scope.filters.saturation
         }))
         .then(function(res) {
             var response = res.data;
@@ -694,7 +696,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.aspectratio_cy = LocalStorageService.get('croptool-aspectratio-y') || '9';;
     $scope.overwrite = LocalStorageService.get('croptool-overwrite') || 'overwrite';;
     $scope.rotation = {angle: 0};
-    $scope.filters = {brightness: 0, contrast: 0};
+    $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
     $scope.aspectRatioChanged();
 
     /**
@@ -716,17 +718,22 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
      * to apply the filter instead of a regular CSS filter since CSS filters
      * are multiplicative, not additive like ImageMagick.
      */
-    function updateFilters(brightness, contrast) {
+    function updateFilters(brightness, contrast, saturation) {
         var slope = contrast >= 0
             ? 100.0 * safeReciprocal(100.0 - contrast)
             : 0.01 * contrast + 1.0;
         var intercept = (0.01 * brightness - 0.5) * slope + 0.5;
 
-        var transfer = document.querySelector('#brightness-contrast-filter feComponentTransfer');
+        var transfer = document.querySelector('#crop-filter feComponentTransfer');
         var funcs = transfer ? transfer.children : [];
         for (var i = 0; i < funcs.length; i++) {
             funcs[i].setAttribute('slope', slope);
             funcs[i].setAttribute('intercept', intercept);
+        }
+
+        var matrix = document.querySelector('#crop-filter feColorMatrix');
+        if (matrix) {
+            matrix.setAttribute('values', 1.0 + saturation / 100.0);
         }
     }
 
@@ -734,9 +741,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         // Clamping is needed since input validation is only advisory.
         var brightness = Math.max(-100, Math.min(100, $scope.filters.brightness || 0));
         var contrast = Math.max(-100, Math.min(100, $scope.filters.contrast || 0));
-        var filterValue = (brightness || contrast) ? 'url(#brightness-contrast-filter)' : '';
+        var saturation = Math.max(-100, Math.min(100, $scope.filters.saturation || 0));
+        var filterValue = (brightness || contrast || saturation) ? 'url(#crop-filter)' : '';
 
-        updateFilters(brightness, contrast);
+        updateFilters(brightness, contrast, saturation);
 
         var images = document.querySelectorAll('.cropper-crop-box img');
         for (var i = 0; i < images.length; i++) {
@@ -744,7 +752,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         }
     }
 
-    $scope.$watchGroup(['filters.brightness', 'filters.contrast'], applyFilters);
+    $scope.$watchGroup(['filters.brightness', 'filters.contrast', 'filters.saturation'], applyFilters);
     $scope.$on('cropper-ready', applyFilters);
 
     // On filename change, check with the MediaWiki API if the file exists.

@@ -137,13 +137,13 @@ class SvgFile extends File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
     {
         if ( (int)$rotation !== 0 ) {
            throw new RuntimeException( "Rotation not supported for SVGs" );
         }
-        if ($brightness != 0 || $contrast != 0) {
-           throw new RuntimeException( "Brightness/contrast not supported for SVGs" );
+        if ($brightness != 0 || $contrast != 0 || $saturation != 0) {
+           throw new RuntimeException( "Filters not supported for SVGs" );
         }
 
         $metadata = self::readMetadata( $srcPath );
