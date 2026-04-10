@@ -176,3 +176,7 @@ Some people complain about contrast of system cursor */
 html .cropper-crop {
   cursor: url( '../res/crosshair.png' ) 16 16, crosshair;
 }
+/* Needed to prevent the overlay color from affecting the preview */
+html .cropper-face {
+  background-color: unset;
+}

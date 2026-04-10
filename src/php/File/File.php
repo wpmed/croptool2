@@ -187,7 +187,7 @@ class File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
     {
         $image = new Imagick($srcPath);
 
@@ -198,6 +198,29 @@ class File implements FileInterface
         }
         $image->cropImage($coords['width'], $coords['height'], $coords['x'], $coords['y']);
         $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
+
+        // Apply brightness/contrast to RGB channels only, not alpha
+        $image->brightnessContrastImage($brightness, $contrast, \Imagick::CHANNEL_ALL & ~\Imagick::CHANNEL_ALPHA);
+
+        // Uses a color matrix instead of Imagick::modulateImage for saturation
+        // to match the SVG feColorMatrix saturate preview used in the
+        // frontend. HSL modulation computes luminance from min/max of RGB
+        // channels, which discards color noise differently.
+        //
+        // https://www.w3.org/TR/filter-effects-1/#feColorMatrixElement
+        if ($saturation != 0) {
+            $s = 1.0 + $saturation / 100.0;
+
+            // 5x5 RGBKA matrix. Imagick requires 5x5 or 6x6 with PHP bindings
+            $image->colorMatrixImage([
+                0.213 + 0.787 * $s, 0.715 - 0.715 * $s, 0.072 - 0.072 * $s, 0, 0,
+                0.213 - 0.213 * $s, 0.715 + 0.285 * $s, 0.072 - 0.072 * $s, 0, 0,
+                0.213 - 0.213 * $s, 0.715 - 0.715 * $s, 0.072 + 0.928 * $s, 0, 0,
+                0,                  0,                  0,                  1, 0,
+                0,                  0,                  0,                  0, 1,
+            ]);
+        }
+
         static::saveImage($image, $destPath, $srcPath);
         $image->destroy();
     }
@@ -208,6 +231,10 @@ class File implements FileInterface
     }
 
     public function supportsRotation() {
+        return true;
+    }
+
+    public function supportsFilters() {
         return true;
     }
 

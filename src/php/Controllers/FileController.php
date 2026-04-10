@@ -86,6 +86,7 @@ class FileController
             'orientation' => $original->orientation,
             'categories' => $page->imageinfo->categories,
             'supportsRotation' => $page->file->supportsRotation(),
+            'supportsFilters' => $page->file->supportsFilters(),
             'overrideResultExtension' => $page->file->overrideResultExtension()
         ]));
 
@@ -115,6 +116,9 @@ class FileController
         $width = intval($request->getQueryParams()['width'] ?? 0);
         $height = intval($request->getQueryParams()['height'] ?? 0);
         $rotation = floatval($request->getQueryParams()['rotate'] ?? 0);
+        $brightness = max(-100.0, min(100.0, floatval($request->getQueryParams()['brightness'] ?? 0)));
+        $contrast = max(-100.0, min(100.0, floatval($request->getQueryParams()['contrast'] ?? 0)));
+        $saturation = max(-100.0, min(100.0, floatval($request->getQueryParams()['saturation'] ?? 0)));
         $cropMethod = $request->getQueryParams()['method'] ??'precise';
 
         $t0 = microtime(true) * 1000;
@@ -130,7 +134,7 @@ class FileController
         }
 
         $original = $editor->open($page->file, $pageno);
-        $crop = $original->crop($destPath, $cropMethod, $x, $y, $width, $height, $rotation);
+        $crop = $original->crop($destPath, $cropMethod, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation);
         $thumb = $crop->thumb($thumbPath);
 
         $logger->info('[{sha1}] Cropped using {method} mode', [
@@ -154,6 +158,15 @@ class FileController
         $dim[] = ($cropPercentXY ?: ' < 1') . '% areawise';
         if ($rotation) {
             $dim[] = "rotated {$rotation}°";
+        }
+        if ($brightness != 0) {
+            $dim[] = "brightness {$brightness}";
+        }
+        if ($contrast != 0) {
+            $dim[] = "contrast {$contrast}";
+        }
+        if ($saturation != 0) {
+            $dim[] = "saturation {$saturation}";
         }
 
         $options = $page->wikitext->possibleStuffToRemove();

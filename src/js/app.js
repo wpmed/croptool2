@@ -121,6 +121,11 @@ directive('ctCropper', ['$timeout', function($timeout) {
                     aspectRatio: scope.aspectRatio,
                     crop: cropperCrop,
 
+                    // Needed to apply filters when re-initializing cropper.
+                    ready: function() {
+                        scope.$emit('cropper-ready');
+                    },
+
                     // restrict cropbox to size of canvas, and restrict canvas
                     // to fit within container
                     viewMode: 2,
@@ -283,6 +288,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.busy = true;
         $scope.crop_dim = undefined;
         $scope.rotation = {angle: 0};
+        $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
 
         $http.get('./api/file/info?' + $httpParamSerializer({
             title: $scope.currentUrlParams.title,
@@ -426,6 +432,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             $scope.rotation.angle += 360;
         }
         $scope.rotation.angle = Math.round($scope.rotation.angle / 90) * 90;
+        $scope.filters.brightness = 0;
+        $scope.filters.contrast = 0;
+        $scope.filters.saturation = 0;
     };
 
     function getAspectRatio() {
@@ -569,7 +578,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             y: $scope.crop_dim.y,
             rotate: $scope.crop_dim.rotate,
             width: $scope.crop_dim.w,
-            height: $scope.crop_dim.h
+            height: $scope.crop_dim.h,
+            brightness: $scope.filters.brightness,
+            contrast: $scope.filters.contrast,
+            saturation: $scope.filters.saturation
         }))
         .then(function(res) {
             var response = res.data;
@@ -684,7 +696,64 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.aspectratio_cy = LocalStorageService.get('croptool-aspectratio-y') || '9';;
     $scope.overwrite = LocalStorageService.get('croptool-overwrite') || 'overwrite';;
     $scope.rotation = {angle: 0};
+    $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
     $scope.aspectRatioChanged();
+
+    /**
+     * Adapted from MagickSafeReciprocal in ImageMagick (MagickCore/statistic-private.h).
+     *
+     * License: https://imagemagick.org/script/license.php
+     */
+    function safeReciprocal(value) {
+        if (Math.abs(value) < 1e-15) {
+            return 1e15;
+        }
+        return 1.0 / value;
+    }
+
+    /**
+     * Approximates the brightness/contrast filter used by ImageMagick.
+     *
+     * This approximation isn't perfect, but it's pretty close. An SVG is used
+     * to apply the filter instead of a regular CSS filter since CSS filters
+     * are multiplicative, not additive like ImageMagick.
+     */
+    function updateFilters(brightness, contrast, saturation) {
+        var slope = contrast >= 0
+            ? 100.0 * safeReciprocal(100.0 - contrast)
+            : 0.01 * contrast + 1.0;
+        var intercept = (0.01 * brightness - 0.5) * slope + 0.5;
+
+        var transfer = document.querySelector('#crop-filter feComponentTransfer');
+        var funcs = transfer ? transfer.children : [];
+        for (var i = 0; i < funcs.length; i++) {
+            funcs[i].setAttribute('slope', slope);
+            funcs[i].setAttribute('intercept', intercept);
+        }
+
+        var matrix = document.querySelector('#crop-filter feColorMatrix');
+        if (matrix) {
+            matrix.setAttribute('values', 1.0 + saturation / 100.0);
+        }
+    }
+
+    function applyFilters() {
+        // Clamping is needed since input validation is only advisory.
+        var brightness = Math.max(-100, Math.min(100, $scope.filters.brightness || 0));
+        var contrast = Math.max(-100, Math.min(100, $scope.filters.contrast || 0));
+        var saturation = Math.max(-100, Math.min(100, $scope.filters.saturation || 0));
+        var filterValue = (brightness || contrast || saturation) ? 'url(#crop-filter)' : '';
+
+        updateFilters(brightness, contrast, saturation);
+
+        var images = document.querySelectorAll('.cropper-crop-box img');
+        for (var i = 0; i < images.length; i++) {
+            images[i].style.filter = filterValue;
+        }
+    }
+
+    $scope.$watchGroup(['filters.brightness', 'filters.contrast', 'filters.saturation'], applyFilters);
+    $scope.$on('cropper-ready', applyFilters);
 
     // On filename change, check with the MediaWiki API if the file exists.
     // Delay 500 ms before checking in case the user is in the process of typing.
