@@ -331,10 +331,100 @@
 
                     <input type="hidden" name="title" ng-model="currentUrlParams.title" />
 
+                    <div class="crop-option-group aspect-ratio-group">
+                        <div class="filter-control-header aspect-ratio-header">
+                            <label translate>cropform-aspect-ratio</label>
+                        </div>
+
+                        <div class="cropdim aspect-ratio-values">
+                            <div class="ratio-control">
+                                <span class="ratio-input-pair" ng-class="{locked: aspectratio != 'free'}">
+                                    <span class="ratio-number-control">
+                                        <input type="number" min="1" ng-model="aspectratio_cx" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-width' | translate}}">
+                                        <span class="ratio-stepper">
+                                            <button type="button" ng-click="stepAspectRatio('x', 1)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('x', -1)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                        </span>
+                                    </span>
+                                    <span aria-hidden="true">:</span>
+                                    <span class="ratio-number-control">
+                                        <input type="number" min="1" ng-model="aspectratio_cy" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-height' | translate}}">
+                                        <span class="ratio-stepper">
+                                            <button type="button" ng-click="stepAspectRatio('y', 1)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('y', -1)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                        </span>
+                                    </span>
+                                </span>
+                                <button type="button" class="btn btn-default orientation-btn ratio-lock-btn" ng-click="toggleAspectRatioLock()" title="{{(aspectratio == 'free' ? 'cropform-aspect-ratio-lock' : 'cropform-aspect-ratio-unlock') | translate}}">
+                                    <i class="fa" ng-class="aspectratio == 'free' ? 'fa-unlock' : 'fa-lock'"></i>
+                                    <span class="sr-only" ng-if="aspectratio == 'free'" translate>cropform-aspect-ratio-lock</span>
+                                    <span class="sr-only" ng-if="aspectratio != 'free'" translate>cropform-aspect-ratio-unlock</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="crop-option-choices aspect-ratio-choices">
+                            <label class="radio-inline" ng-class="{selected: isOriginalAspectRatio()}">
+                                <input type="radio" name="aspectratio-preset" value="keep" ng-click="aspectRatioPresetChanged('keep')">
+                                <span translate>cropform-aspect-ratio-keep</span>
+                            </label>
+                            <label class="radio-inline" ng-class="{selected: isAspectRatioPreset(1, 1)}">
+                                <input type="radio" name="aspectratio-preset" value="1:1" ng-click="aspectRatioPresetChanged('ratio', 1, 1)">
+                                <span>1:1</span>
+                            </label>
+                            <label class="radio-inline" ng-class="{selected: isAspectRatioPreset(3, 2)}">
+                                <input type="radio" name="aspectratio-preset" value="3:2" ng-click="aspectRatioPresetChanged('ratio', 3, 2)">
+                                <span>3:2</span>
+                            </label>
+                            <label class="radio-inline" ng-class="{selected: isAspectRatioPreset(4, 3)}">
+                                <input type="radio" name="aspectratio-preset" value="4:3" ng-click="aspectRatioPresetChanged('ratio', 4, 3)">
+                                <span>4:3</span>
+                            </label>
+                            <label class="radio-inline" ng-class="{selected: isAspectRatioPreset(6, 9)}">
+                                <input type="radio" name="aspectratio-preset" value="6:9" ng-click="aspectRatioPresetChanged('ratio', 6, 9)">
+                                <span>6:9</span>
+                            </label>
+                            <label class="radio-inline" ng-class="{selected: isAspectRatioPreset(9, 6)}">
+                                <input type="radio" name="aspectratio-preset" value="9:6" ng-click="aspectRatioPresetChanged('ratio', 9, 6)">
+                                <span>9:6</span>
+                            </label>
+                        </div>
+
+                    </div>
+
                     <div class="orientation-control" ng-if="metadata.supportsRotation">
+                        <div class="straighten-control">
+                            <div class="filter-control-header straighten-control-header">
+                                <label id="straightenLabel" for="straightenInput" translate>cropform-straighten</label>
+                            </div>
+                            <div class="straighten-control-row">
+                                <input class="straighten-angle-slider" type="range" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()" aria-labelledby="straightenLabel">
+                                <div class="value-action-group">
+                                    <div class="input-group straighten-angle-input">
+                                        <input id="straightenInput" class="form-control" type="number" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()" aria-label="{{'cropform-straighten' | translate}}">
+                                        <span class="input-group-btn straighten-stepper">
+                                            <button type="button" class="btn btn-default" ng-click="stepStraighten(0.1)" title="{{'cropform-straighten-increase' | translate}}" aria-label="{{'cropform-straighten-increase' | translate}}">
+                                                <span class="straighten-stepper-arrow straighten-stepper-arrow-up" aria-hidden="true"></span>
+                                            </button>
+                                            <button type="button" class="btn btn-default" ng-click="stepStraighten(-0.1)" title="{{'cropform-straighten-decrease' | translate}}" aria-label="{{'cropform-straighten-decrease' | translate}}">
+                                                <span class="straighten-stepper-arrow straighten-stepper-arrow-down" aria-hidden="true"></span>
+                                            </button>
+                                        </span>
+                                        <span class="input-group-addon" aria-hidden="true">&deg;</span>
+                                    </div>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn ladda-button" ng-click="autoStraighten()" ng-disabled="autoStraightenBusy" ladda="autoStraightenBusy" data-style="zoom-in" title="{{'cropform-straighten-auto' | translate}}">
+                                        <i class="fa fa-magic"></i>
+                                        <span class="sr-only" translate>cropform-straighten-auto</span>
+                                    </button>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetOrientation()" ng-disabled="!orientationActive()" title="{{'cropform-orientation-reset' | translate}}">
+                                        <i class="fa fa-times-circle"></i>
+                                        <span class="sr-only" translate>cropform-orientation-reset</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="filter-control-header orientation-control-header">
-                            <label for="straightenInput" translate>cropform-orientation</label>
-                            <span>{{rotation.angle | number:1}}&deg;</span>
+                            <label translate>cropform-orientation</label>
                         </div>
                         <div class="orientation-toolbar">
                             <button type="button" class="btn btn-default orientation-btn" ng-click="rotateLeft()" title="{{'cropform-rotate-left' | translate}}">
@@ -346,41 +436,48 @@
                                 <span class="sr-only" translate>cropform-rotate-right</span>
                             </button>
                         </div>
-                        <div class="straighten-control">
-                            <div class="filter-control-header straighten-control-header">
-                                <label for="straightenInput" translate>cropform-straighten</label>
-                                <span>{{rotation.straightenAngle | number:1}}&deg;</span>
-                            </div>
-                            <div class="straighten-control-row">
-                                <input id="straightenInput" type="range" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()">
-                                <button type="button" class="btn btn-default orientation-btn ladda-button" ng-click="autoStraighten()" ng-disabled="autoStraightenBusy" ladda="autoStraightenBusy" data-style="zoom-in" title="{{'cropform-straighten-auto' | translate}}">
-                                    <i class="fa fa-magic"></i>
-                                    <span class="sr-only" translate>cropform-straighten-auto</span>
-                                </button>
-                                <button type="button" class="btn btn-default orientation-btn" ng-click="resetOrientation()" ng-disabled="!orientationActive()" title="{{'cropform-orientation-reset' | translate}}">
-                                    <i class="fa fa-times-circle"></i>
-                                    <span class="sr-only" translate>cropform-orientation-reset</span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="cropdim">
                         <label>
                           {{ 'top' | translate }}
-                          <input type="number" step="10" ng-model="crop_dim.y" ng-change="onCropDimChange('y')">
+                          <span class="cropdim-input-control">
+                              <input type="number" step="10" ng-model="crop_dim.y" ng-change="onCropDimChange('y')">
+                              <span class="cropdim-stepper">
+                                  <button type="button" ng-click="stepCropDimension('y', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                  <button type="button" ng-click="stepCropDimension('y', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                              </span>
+                          </span>
                         </label>
                         <label>
                             {{ 'left' | translate }}
-                            <input type="number" step="10" ng-model="crop_dim.x" ng-change="onCropDimChange('x')">
+                            <span class="cropdim-input-control">
+                                <input type="number" step="10" ng-model="crop_dim.x" ng-change="onCropDimChange('x')">
+                                <span class="cropdim-stepper">
+                                    <button type="button" ng-click="stepCropDimension('x', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-click="stepCropDimension('x', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                </span>
+                            </span>
                         </label>
                         <label>
                             {{ 'width' | translate }}
-                            <input type="number" step="10" ng-model="crop_dim.w" ng-change="onCropDimChange('w')">
+                            <span class="cropdim-input-control">
+                                <input type="number" step="10" ng-model="crop_dim.w" ng-change="onCropDimChange('w')">
+                                <span class="cropdim-stepper">
+                                    <button type="button" ng-click="stepCropDimension('w', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-click="stepCropDimension('w', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                </span>
+                            </span>
                         </label>
                         <label>
                             {{ 'height' | translate }}
-                            <input type="number" step="10" ng-model="crop_dim.h" ng-change="onCropDimChange('h')">
+                            <span class="cropdim-input-control">
+                                <input type="number" step="10" ng-model="crop_dim.h" ng-change="onCropDimChange('h')">
+                                <span class="cropdim-stepper">
+                                    <button type="button" ng-click="stepCropDimension('h', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-click="stepCropDimension('h', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                </span>
+                            </span>
                         </label>
                     </div>
 
@@ -395,78 +492,73 @@
                         <div class="filter-controls">
                             <div class="filter-control-row">
                                 <div class="filter-control-header">
-                                    <label for="brightnessInput" translate>cropform-brightness</label>
-                                    <span>{{filters.brightness || 0}}</span>
+                                    <label id="brightnessLabel" for="brightnessInput" translate>cropform-brightness</label>
                                 </div>
-                                <input id="brightnessInput" type="range" min="-100" max="100" step="1" ng-model="filters.brightness">
-                                <button type="button" class="btn btn-default orientation-btn filter-auto-btn" ng-click="autoFilter('brightness')" title="{{'cropform-adjustments-auto' | translate}}">
-                                    <i class="fa fa-magic"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-auto</span>
-                                </button>
-                                <button type="button" class="btn btn-default orientation-btn filter-reset-btn" ng-click="resetFilter('brightness')" ng-disabled="!filterActive('brightness')" title="{{'cropform-adjustments-reset' | translate}}">
-                                    <i class="fa fa-times-circle"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-reset</span>
-                                </button>
+                                <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.brightness" aria-labelledby="brightnessLabel">
+                                <div class="value-action-group">
+                                    <div class="input-group filter-value-input">
+                                        <input id="brightnessInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.brightness" aria-label="{{'cropform-brightness' | translate}}">
+                                        <span class="input-group-btn value-stepper">
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('brightness', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('brightness', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('brightness')" title="{{'cropform-adjustments-auto' | translate}}">
+                                        <i class="fa fa-magic"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-auto</span>
+                                    </button>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('brightness')" ng-disabled="!filterActive('brightness')" title="{{'cropform-adjustments-reset' | translate}}">
+                                        <i class="fa fa-times-circle"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-reset</span>
+                                    </button>
+                                </div>
                             </div>
                             <div class="filter-control-row">
                                 <div class="filter-control-header">
-                                    <label for="contrastInput" translate>cropform-contrast</label>
-                                    <span>{{filters.contrast || 0}}</span>
+                                    <label id="contrastLabel" for="contrastInput" translate>cropform-contrast</label>
                                 </div>
-                                <input id="contrastInput" type="range" min="-100" max="100" step="1" ng-model="filters.contrast">
-                                <button type="button" class="btn btn-default orientation-btn filter-auto-btn" ng-click="autoFilter('contrast')" title="{{'cropform-adjustments-auto' | translate}}">
-                                    <i class="fa fa-magic"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-auto</span>
-                                </button>
-                                <button type="button" class="btn btn-default orientation-btn filter-reset-btn" ng-click="resetFilter('contrast')" ng-disabled="!filterActive('contrast')" title="{{'cropform-adjustments-reset' | translate}}">
-                                    <i class="fa fa-times-circle"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-reset</span>
-                                </button>
+                                <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.contrast" aria-labelledby="contrastLabel">
+                                <div class="value-action-group">
+                                    <div class="input-group filter-value-input">
+                                        <input id="contrastInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.contrast" aria-label="{{'cropform-contrast' | translate}}">
+                                        <span class="input-group-btn value-stepper">
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('contrast', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('contrast', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('contrast')" title="{{'cropform-adjustments-auto' | translate}}">
+                                        <i class="fa fa-magic"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-auto</span>
+                                    </button>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('contrast')" ng-disabled="!filterActive('contrast')" title="{{'cropform-adjustments-reset' | translate}}">
+                                        <i class="fa fa-times-circle"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-reset</span>
+                                    </button>
+                                </div>
                             </div>
                             <div class="filter-control-row">
                                 <div class="filter-control-header">
-                                    <label for="saturationInput" translate>cropform-saturation</label>
-                                    <span>{{filters.saturation || 0}}</span>
+                                    <label id="saturationLabel" for="saturationInput" translate>cropform-saturation</label>
                                 </div>
-                                <input id="saturationInput" type="range" min="-100" max="100" step="1" ng-model="filters.saturation">
-                                <button type="button" class="btn btn-default orientation-btn filter-auto-btn" ng-click="autoFilter('saturation')" title="{{'cropform-adjustments-auto' | translate}}">
-                                    <i class="fa fa-magic"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-auto</span>
-                                </button>
-                                <button type="button" class="btn btn-default orientation-btn filter-reset-btn" ng-click="resetFilter('saturation')" ng-disabled="!filterActive('saturation')" title="{{'cropform-adjustments-reset' | translate}}">
-                                    <i class="fa fa-times-circle"></i>
-                                    <span class="sr-only" translate>cropform-adjustments-reset</span>
-                                </button>
+                                <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.saturation" aria-labelledby="saturationLabel">
+                                <div class="value-action-group">
+                                    <div class="input-group filter-value-input">
+                                        <input id="saturationInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.saturation" aria-label="{{'cropform-saturation' | translate}}">
+                                        <span class="input-group-btn value-stepper">
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('saturation', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-click="stepFilter('saturation', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('saturation')" title="{{'cropform-adjustments-auto' | translate}}">
+                                        <i class="fa fa-magic"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-auto</span>
+                                    </button>
+                                    <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('saturation')" ng-disabled="!filterActive('saturation')" title="{{'cropform-adjustments-reset' | translate}}">
+                                        <i class="fa fa-times-circle"></i>
+                                        <span class="sr-only" translate>cropform-adjustments-reset</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="crop-option-group aspect-ratio-group">
-                        <div class="filter-control-header aspect-ratio-header">
-                            <label translate>cropform-aspect-ratio</label>
-                        </div>
-
-                        <div class="cropdim aspect-ratio-values">
-                            <div class="ratio-control">
-                                <span class="ratio-input-pair" ng-class="{locked: aspectratio != 'free'}">
-                                    <input type="number" min="1" ng-model="aspectratio_cx" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-width' | translate}}">:<input type="number" min="1" ng-model="aspectratio_cy" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-height' | translate}}">
-                                </span>
-                                <button type="button" class="btn btn-default orientation-btn ratio-lock-btn" ng-click="toggleAspectRatioLock()" title="{{(aspectratio == 'free' ? 'cropform-aspect-ratio-lock' : 'cropform-aspect-ratio-unlock') | translate}}">
-                                    <i class="fa" ng-class="aspectratio == 'free' ? 'fa-unlock' : 'fa-lock'"></i>
-                                    <span class="sr-only" ng-if="aspectratio == 'free'" translate>cropform-aspect-ratio-lock</span>
-                                    <span class="sr-only" ng-if="aspectratio != 'free'" translate>cropform-aspect-ratio-unlock</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="crop-option-choices aspect-ratio-choices">
-                            <label class="radio-inline" ng-class="{selected: isOriginalAspectRatio()}">
-                                <input type="radio" name="aspectratio-preset" value="keep" ng-click="aspectRatioPresetChanged('keep')">
-                                <span translate>cropform-aspect-ratio-keep</span>
-                            </label>
-                            <label class="radio-inline" ng-class="{selected: aspectratio == 'fixed' && aspectratio_cx == 1 && aspectratio_cy == 1}">
-                                <input type="radio" name="aspectratio-preset" value="square" ng-click="aspectRatioPresetChanged('square')">
-                                <span translate>cropform-aspect-ratio-square</span>
-                            </label>
                         </div>
                     </div>
 
