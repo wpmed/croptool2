@@ -562,6 +562,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             if (!$scope.currentUrlParams.ratio) {
                 $scope.aspectratio = 'free';
                 $scope.aspectratio_value = null;
+                $scope.selectedAspectRatioPreset = null;
                 setAspectRatioFields(response.original.width, response.original.height);
             } else if ($scope.currentUrlParams.ratio == 'keep') {
                 $scope.aspectRatioPresetChanged('keep');
@@ -605,6 +606,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
                         $scope.aspectratio_cx = parts[0];
                         $scope.aspectratio_cy = parts[1];
                         $scope.aspectratio_value = parseInt(parts[0]) / parseInt(parts[1]);
+                        $scope.selectedAspectRatioPreset = parts[0] + ':' + parts[1];
                     } else {
                         $scope.aspectratio = $scope.currentUrlParams.ratio || 'free';
                         if ($scope.aspectratio == 'free') {
@@ -832,6 +834,21 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         updateRotationAngle();
     };
 
+    $scope.stepCropDimension = function(dimension, step) {
+        if (!$scope.crop_dim || !Object.prototype.hasOwnProperty.call($scope.crop_dim, dimension)) {
+            return;
+        }
+        var value = parseInt($scope.crop_dim[dimension]);
+        $scope.crop_dim[dimension] = (isNaN(value) ? 0 : value) + step;
+        $scope.onCropDimChange(dimension);
+    };
+
+    $scope.stepStraighten = function(step) {
+        var angle = Math.round((straightenAngle() + step) * 10) / 10;
+        $scope.rotation.straightenAngle = Math.max(-15, Math.min(15, angle));
+        updateRotationAngle();
+    };
+
     $scope.resetStraighten = function() {
         $scope.rotation.straightenAngle = 0;
         updateRotationAngle();
@@ -927,7 +944,20 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.isOriginalAspectRatio = function() {
         var current = currentAspectRatioValue(),
             original = originalAspectRatioValue();
-        return $scope.aspectratio != 'free' && current !== null && original !== null && Math.abs(current - original) < 0.01;
+        return $scope.aspectratio != 'free' &&
+            ($scope.selectedAspectRatioPreset == 'keep' || !$scope.selectedAspectRatioPreset) &&
+            current !== null &&
+            original !== null &&
+            Math.abs(current - original) < 0.01;
+    };
+
+    $scope.isAspectRatioPreset = function(width, height) {
+        var key = width + ':' + height,
+            current = currentAspectRatioValue();
+        return $scope.aspectratio != 'free' &&
+            ($scope.selectedAspectRatioPreset == key || !$scope.selectedAspectRatioPreset) &&
+            current !== null &&
+            Math.abs(current - width / height) < 0.001;
     };
 
     function greatestCommonDivisor(a, b) {
@@ -962,17 +992,22 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         applyAspectRatioChange('default');
     };
 
-    $scope.aspectRatioPresetChanged = function(preset) {
+    $scope.aspectRatioPresetChanged = function(preset, width, height) {
         if (preset == 'keep') {
             if ($scope.metadata && $scope.metadata.original) {
                 setAspectRatioFields($scope.metadata.original.width, $scope.metadata.original.height, true);
             }
+            $scope.selectedAspectRatioPreset = 'keep';
             $scope.aspectratio = 'fixed';
-        } else if (preset == 'square') {
-            $scope.aspectratio_value = 1;
-            setAspectRatioFields(1, 1);
+        } else if (preset == 'ratio' || preset == 'square') {
+            width = preset == 'square' ? 1 : width;
+            height = preset == 'square' ? 1 : height;
+            $scope.aspectratio_value = width / height;
+            setAspectRatioFields(width, height);
+            $scope.selectedAspectRatioPreset = width + ':' + height;
             $scope.aspectratio = 'fixed';
         } else {
+            $scope.selectedAspectRatioPreset = null;
             $scope.aspectratio = preset;
         }
         applyAspectRatioChange('preserve-width');
@@ -981,7 +1016,15 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.aspectRatioFieldsChanged = function() {
         $scope.aspectratio = 'fixed';
         $scope.aspectratio_value = null;
+        $scope.selectedAspectRatioPreset = null;
         applyAspectRatioChange('preserve-width');
+    };
+
+    $scope.stepAspectRatio = function(dimension, step) {
+        var field = dimension == 'x' ? 'aspectratio_cx' : 'aspectratio_cy',
+            value = parseInt($scope[field]);
+        $scope[field] = Math.max(1, (isNaN(value) ? 1 : value) + step);
+        $scope.aspectRatioFieldsChanged();
     };
 
     $scope.toggleAspectRatioLock = function() {
@@ -993,6 +1036,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         } else {
             $scope.aspectratio = 'free';
         }
+        $scope.selectedAspectRatioPreset = null;
         applyAspectRatioChange('preserve');
     };
 
@@ -1065,6 +1109,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.suggestedNewTitle = '';
         $scope.cropresults = null;
         $scope.uploadresults = null;
+        $scope.selectedAspectRatioPreset = null;
 
         if (!$scope.currentUrlParams.title) {
             $scope.metadata = null;
@@ -1398,6 +1443,15 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         if ($scope.filters && Object.prototype.hasOwnProperty.call($scope.filters, filter)) {
             $scope.filters[filter] = 0;
         }
+    };
+
+    $scope.stepFilter = function(filter, step) {
+        if (!$scope.filters || !Object.prototype.hasOwnProperty.call($scope.filters, filter)) {
+            return;
+        }
+        var value = parseInt($scope.filters[filter]);
+        value = isNaN(value) ? 0 : value;
+        $scope.filters[filter] = Math.max(-100, Math.min(100, value + step));
     };
 
     function clampFilterValue(value, min, max) {
