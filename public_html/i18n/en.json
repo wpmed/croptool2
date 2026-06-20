@@ -63,6 +63,7 @@
     "cropform-adjustments-reset": "Reset",
     "cropform-adjustments-increase": "Increase adjustment",
     "cropform-adjustments-decrease": "Decrease adjustment",
+    "cropform-adjustments-compare-preview": "Hold to show image without adjustments",
     "cropform-aspect-ratio-values": "Ratio",
     "cropform-aspect-ratio-width": "Aspect ratio width",
     "cropform-aspect-ratio-height": "Aspect ratio height",
