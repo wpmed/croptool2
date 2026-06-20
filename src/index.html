@@ -216,6 +216,20 @@
 
                     <img id="cropbox" ng-class="{imageloading: busy}" ct-cropper aspect-ratio="{{aspectratio_cxy}}" rotation="{{rotation.angle}}" on-crop="updateCoords($event.detail)" ng-src="{{metadata.thumb ? metadata.thumb.name : metadata.original.name}}" width="{{metadata.thumb ? metadata.thumb.width : metadata.original.width}}" height="{{metadata.thumb ? metadata.thumb.height : metadata.original.height}}">
 
+                    <button
+                        type="button"
+                        class="btn btn-default filter-preview-toggle"
+                        ng-show="filtersActive()"
+                        ct-compare-preview
+                        compare-start="beginFilterComparison()"
+                        compare-end="endFilterComparison()"
+                        ng-attr-aria-pressed="{{!filterPreviewEnabled}}"
+                        title="{{'cropform-adjustments-compare-preview' | translate}}"
+                        aria-label="{{'cropform-adjustments-compare-preview' | translate}}"
+                    >
+                        <i class="fa" ng-class="filterPreviewEnabled ? 'fa-eye' : 'fa-eye-slash'"></i>
+                    </button>
+
                 </div>
 
                 <!-- ********************************************************************************************************

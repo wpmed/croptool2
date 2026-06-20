@@ -63,6 +63,7 @@
     "cropform-adjustments-reset": "Button text for resetting brightness, contrast, and saturation controls.",
     "cropform-adjustments-increase": "Tooltip and accessible label for increasing a brightness, contrast, or saturation value by 1.",
     "cropform-adjustments-decrease": "Tooltip and accessible label for decreasing a brightness, contrast, or saturation value by 1.",
+    "cropform-adjustments-compare-preview": "Tooltip and accessible label for a button that temporarily hides live brightness, contrast, and saturation adjustments while it is held down.",
     "cropform-aspect-ratio-values": "Label for the numeric aspect-ratio fields.",
     "cropform-aspect-ratio-width": "Accessible label for the aspect-ratio width field.",
     "cropform-aspect-ratio-height": "Accessible label for the aspect-ratio height field.",

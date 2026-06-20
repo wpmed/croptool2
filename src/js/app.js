@@ -230,13 +230,78 @@ directive('ctCropper', ['$timeout', function($timeout) {
     };
 }]).
 
+directive('ctComparePreview', [function() {
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+            var comparing = false;
+
+            element.on('pointerdown', beginComparison);
+            element.on('pointerup pointercancel lostpointercapture', endComparison);
+            element.on('keydown', keydown);
+            element.on('keyup blur', keyup);
+            scope.$on('$destroy', destroy);
+
+            function isActivationKey(event) {
+                return event.key == ' ' || event.key == 'Enter' || event.keyCode == 32 || event.keyCode == 13;
+            }
+
+            function beginComparison(event) {
+                if (event.type == 'pointerdown' && element[0].setPointerCapture) {
+                    element[0].setPointerCapture(event.pointerId);
+                }
+                if (comparing) {
+                    return;
+                }
+                comparing = true;
+                scope.$applyAsync(function() {
+                    scope.$eval(attrs.compareStart);
+                });
+            }
+
+            function endComparison() {
+                if (!comparing) {
+                    return;
+                }
+                comparing = false;
+                scope.$applyAsync(function() {
+                    scope.$eval(attrs.compareEnd);
+                });
+            }
+
+            function keydown(event) {
+                if (!isActivationKey(event)) {
+                    return;
+                }
+                event.preventDefault();
+                beginComparison(event);
+            }
+
+            function keyup(event) {
+                if (event.type == 'blur' || isActivationKey(event)) {
+                    event.preventDefault();
+                    endComparison();
+                }
+            }
+
+            function destroy() {
+                element.off('pointerdown', beginComparison);
+                element.off('pointerup pointercancel lostpointercapture', endComparison);
+                element.off('keydown', keydown);
+                element.off('keyup blur', keyup);
+            }
+        }
+    };
+}]).
+
 controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpParamSerializer', '$translate', 'LoginService', 'localStorageService', 'WindowService', function($scope, $http, $timeout, $q, $window, $httpParamSerializer, $translate, LoginService, LocalStorageService, WindowService) {
 
     var everPushedSomething = false,
         pixelratio = [1,1],
         setSelectCalled = false,
         labelFallbackLanguages = ['en', 'mul', 'de', 'fr', 'nl', 'es'],
-        descriptionFallbackLanguages = ['en', 'de', 'fr', 'nl', 'es'];
+        descriptionFallbackLanguages = ['en', 'de', 'fr', 'nl', 'es'],
+        rtlLanguages = ['ar', 'arc', 'arz', 'azb', 'ckb', 'dv', 'fa', 'he', 'khw', 'ks', 'ku', 'mzn', 'ps', 'sd', 'ug', 'ur', 'yi'];
 
     $scope.availableLanguages = [
         { code: 'en', label: 'English' },
@@ -256,8 +321,12 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     };
 
     function useInterfaceLanguage(language) {
+        var baseLanguage = (language || 'en').toLowerCase().split(/[-_]/)[0];
+
         $scope.currentLanguage = language;
         $translate.use(language);
+        $window.document.documentElement.lang = language || 'en';
+        $window.document.documentElement.dir = rtlLanguages.indexOf(baseLanguage) == -1 ? 'ltr' : 'rtl';
     }
 
     function languageAvailable(language) {
@@ -535,6 +604,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0};
         $scope.preRotationCropmethod = null;
         $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
+        $scope.filterPreviewEnabled = true;
 
         $http.get('./api/file/info?' + $httpParamSerializer({
             title: $scope.currentUrlParams.title,
@@ -1372,6 +1442,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0};
     $scope.preRotationCropmethod = null;
     $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
+    $scope.filterPreviewEnabled = true;
     $scope.aspectRatioChanged();
 
     /**
@@ -1417,7 +1488,11 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         var brightness = Math.max(-100, Math.min(100, $scope.filters.brightness || 0));
         var contrast = Math.max(-100, Math.min(100, $scope.filters.contrast || 0));
         var saturation = Math.max(-100, Math.min(100, $scope.filters.saturation || 0));
-        var filterValue = (brightness || contrast || saturation) ? 'url(#crop-filter)' : '';
+        var filtersActive = !!(brightness || contrast || saturation);
+        if (!filtersActive) {
+            $scope.filterPreviewEnabled = true;
+        }
+        var filterValue = filtersActive && $scope.filterPreviewEnabled ? 'url(#crop-filter)' : '';
 
         updateFilters(brightness, contrast, saturation);
 
@@ -1433,6 +1508,16 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             $scope.filters.contrast ||
             $scope.filters.saturation
         ));
+    };
+
+    $scope.beginFilterComparison = function() {
+        $scope.filterPreviewEnabled = false;
+        applyFilters();
+    };
+
+    $scope.endFilterComparison = function() {
+        $scope.filterPreviewEnabled = true;
+        applyFilters();
     };
 
     $scope.filterActive = function(filter) {
