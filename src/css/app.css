@@ -955,7 +955,7 @@ label {
 }
 
 .aspect-ratio-choices {
-    grid-template-columns: repeat(6, minmax(58px, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     justify-content: center;
     width: 100%;
     max-width: 100%;
