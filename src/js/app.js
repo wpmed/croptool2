@@ -300,8 +300,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         pixelratio = [1,1],
         setSelectCalled = false,
         labelFallbackLanguages = ['en', 'mul', 'de', 'fr', 'nl', 'es'],
-        descriptionFallbackLanguages = ['en', 'de', 'fr', 'nl', 'es'],
-        rtlLanguages = ['ar', 'arc', 'arz', 'azb', 'ckb', 'dv', 'fa', 'he', 'khw', 'ks', 'ku', 'mzn', 'ps', 'sd', 'ug', 'ur', 'yi'];
+        descriptionFallbackLanguages = ['en', 'de', 'fr', 'nl', 'es'];
 
     $scope.availableLanguages = [
         { code: 'en', label: 'English' },
@@ -321,12 +320,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     };
 
     function useInterfaceLanguage(language) {
-        var baseLanguage = (language || 'en').toLowerCase().split(/[-_]/)[0];
-
         $scope.currentLanguage = language;
         $translate.use(language);
-        $window.document.documentElement.lang = language || 'en';
-        $window.document.documentElement.dir = rtlLanguages.indexOf(baseLanguage) == -1 ? 'ltr' : 'rtl';
     }
 
     function languageAvailable(language) {

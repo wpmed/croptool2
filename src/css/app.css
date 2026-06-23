@@ -32,7 +32,6 @@ h2 {
 .app-menu {
     display: flex;
     align-items: center;
-    direction: ltr;
     gap: 16px;
     min-height: 56px;
     margin: 0 -2vw 18px;
@@ -323,14 +322,6 @@ label {
     border-color: #72777d;
     background: #fff;
     color: #202122;
-}
-
-[dir="rtl"] .cropdim-input-control,
-[dir="rtl"] .ratio-input-pair,
-[dir="rtl"] .straighten-angle-slider,
-[dir="rtl"] .filter-value-slider,
-[dir="rtl"] .value-action-group {
-    direction: ltr;
 }
 
 .preview-media {
