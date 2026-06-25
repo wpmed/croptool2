@@ -58,6 +58,33 @@ h2 {
     text-decoration: none;
 }
 
+.ct-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1em;
+    height: 1em;
+    color: currentColor;
+    line-height: 1;
+    vertical-align: -0.125em;
+}
+
+.ct-icon svg {
+    display: block;
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+}
+
+.alert .ct-icon {
+    margin-right: 4px;
+}
+
+.btn .ct-icon + span:not(.sr-only) {
+    margin-left: 4px;
+}
+
 .app-current-file {
     flex: 1 1 auto;
     min-width: 0;
@@ -117,7 +144,7 @@ h2 {
     min-width: 0;
 }
 
-.login-status-text .fa {
+.login-status-text .ct-icon {
     color: #5d6b77;
 }
 
@@ -455,10 +482,6 @@ label {
     border-bottom-left-radius: 0;
 }
 
-.upload-result-copy-button .fa {
-    margin-right: 4px;
-}
-
 .upload-result-layout .preview-result-note {
     margin-bottom: 0;
 }
@@ -692,7 +715,7 @@ label {
     border-radius: 0;
 }
 
-.value-action-btn .fa {
+.value-action-btn .ct-icon {
     font-size: inherit;
 }
 
@@ -714,10 +737,10 @@ label {
     opacity: 1;
 }
 
-.orientation-control .btn.value-reset-btn:disabled .fa,
-.orientation-control .btn.value-reset-btn.disabled .fa,
-.filter-control-row .btn.value-reset-btn:disabled .fa,
-.filter-control-row .btn.value-reset-btn.disabled .fa {
+.orientation-control .btn.value-reset-btn:disabled .ct-icon,
+.orientation-control .btn.value-reset-btn.disabled .ct-icon,
+.filter-control-row .btn.value-reset-btn:disabled .ct-icon,
+.filter-control-row .btn.value-reset-btn.disabled .ct-icon {
     color: #aaa;
 }
 
@@ -747,7 +770,7 @@ label {
     line-height: 1.35;
 }
 
-.preview-result-note .fa {
+.preview-result-note .ct-icon {
     margin-top: 2px;
 }
 
@@ -849,7 +872,7 @@ label {
     text-decoration: underline;
 }
 
-.filename-existing-link .fa-external-link {
+.filename-existing-link .ct-icon {
     margin-left: 4px;
     font-size: 85%;
 }

@@ -10,10 +10,11 @@
 // if (window.location.protocol != "https:")
 //     window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
 
+window.CropToolAssetVersion = 'dev';
+
 </script>
 
   <link rel="stylesheet" type="text/css" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
   <link rel="stylesheet" type="text/css" href="//tools-static.wmflabs.org/cdnjs/ajax/libs/cropperjs/1.6.2/cropper.css">
   <!-- build:css css/vendor.css -->
   <link rel="stylesheet" type="text/css" href="node_modules/ladda/dist/ladda-themeless.min.css">
@@ -37,6 +38,7 @@
   <script src="node_modules/angular-ladda/dist/angular-ladda.min.js"></script>
   <!-- endbuild -->
   <!-- build:js js/app.js-->
+  <script src="src/js/codex-icons.js"></script>
   <script src="src/js/app.js"></script>
   <!-- endbuild -->
 
@@ -61,7 +63,7 @@
 
     <header class="app-menu">
         <a class="app-brand" href ng-click="currentUrlParams = {}; openFile()">
-            <i class="fa fa-crop"></i>
+            <span ct-icon="cut"></span>
             <span translate>CropTool2</span>
         </a>
         <div class="app-current-file" ng-show="metadata">
@@ -74,8 +76,7 @@
             </label>
             <div ng-show="user" ng-controller="LoginCtrl" class="login-status">
                 <span class="login-status-text">
-                    <i class="fa fa-user-circle"></i>
-                    <span translate>logged-in</span>
+                    <span ct-icon="user-active"></span>
                     <strong class="login-status-user">{{user.name}}</strong>
                 </span>
                 <a class="login-status-action" href ng-click="logout()" translate>logout</a>
@@ -95,12 +96,12 @@
     <div ng-controller="LoginCtrl" ng-show="ready && !user">
 
         <div ng-show="oauthError" class="alert alert-danger" role="alert">
-            <span class="fa fa-warning"></span>
+            <span ct-icon="error"></span>
             <span ng-bind-html="oauthError"></span>
         </div>
 
         <div ng-repeat="warning in oauthWarnings" class="alert alert-warning" role="alert">
-            <span class="fa fa-info-circle"></span>
+            <span ct-icon="help-notice"></span>
             <span>{{ warning | translate }}</span>
         </div>
 
@@ -117,7 +118,7 @@
                 <p translate>loginform-help</p>
 
                 <button type="submit" class="btn btn-primary" ng-click="oauthLogin()">
-                    <i class="fa fa-lock"></i>
+                    <span ct-icon="lock"></span>
                     <span translate>loginform-submit-button</span>
                 </button>
 
@@ -149,11 +150,11 @@
                             </label>
                             <input type="text" ng-model="titleInput" class="form-control" placeholder="{{'titleform-file-label' | translate}}">
                             <span class="preview-result-note preview-result-danger title-file-note" ng-show="exists[currentUrlParams.site+':'+currentUrlParams.title] === false">
-                                <i class="fa fa-warning"></i>
+                                <span ct-icon="error"></span>
                                 <span translate>titleform-file-not-found</span>
                             </span>
                             <span class="preview-result-note preview-result-success title-found-note title-file-note" ng-show="exists[currentUrlParams.site+':'+currentUrlParams.title] === true">
-                                <i class="fa fa-check-circle"></i>
+                                <span ct-icon="success"></span>
                                 <span translate>titleform-file-found</span>
                             </span>
                         </div>
@@ -165,7 +166,7 @@
                     </div>
 
                     <div ng-show="error" class="alert alert-danger" role="alert">
-                        <span class="fa fa-warning"></span>
+                        <span ct-icon="error"></span>
                         <span ng-bind-html="error"></span>
                     </div>
 
@@ -227,7 +228,7 @@
                         title="{{'cropform-adjustments-compare-preview' | translate}}"
                         aria-label="{{'cropform-adjustments-compare-preview' | translate}}"
                     >
-                        <i class="fa" ng-class="filterPreviewEnabled ? 'fa-eye' : 'fa-eye-slash'"></i>
+                        <span ct-icon="{{filterPreviewEnabled ? 'eye' : 'eye-closed'}}"></span>
                     </button>
 
                 </div>
@@ -278,7 +279,7 @@
 
                 <div ng-show="uploadresults && uploadresults.result == 'Success'" class="upload-result-card">
                     <a class="preview-result-note preview-result-success upload-success-link upload-result-message" ng-href="{{uploadresults.imageinfo.descriptionurl}}">
-                        <i class="fa fa-check-circle"></i>
+                        <span ct-icon="success"></span>
                         <span class="upload-success-copy">
                             <strong translate>results-success</strong>
                             <span translate>results-success-details-short</span>
@@ -290,7 +291,7 @@
                             <span class="upload-result-copy-control">
                                 <input id="uploadResultFileName" class="form-control upload-result-copy-input" type="text" readonly value="{{uploadResultFileName}}" ng-click="$event.target.select()">
                                 <button class="btn btn-default upload-result-copy-button" type="button" ng-click="copyUploadResult(uploadResultFileName, 'filename')" ng-disabled="!uploadResultFileName">
-                                    <i class="fa" ng-class="uploadResultCopied == 'filename' ? 'fa-check' : 'fa-copy'"></i>
+                                    <span ct-icon="{{uploadResultCopied == 'filename' ? 'check' : 'copy'}}"></span>
                                     <span ng-if="uploadResultCopied != 'filename'" translate>results-copy</span>
                                     <span ng-if="uploadResultCopied == 'filename'" translate>results-copied</span>
                                 </button>
@@ -301,7 +302,7 @@
                             <span class="upload-result-copy-control">
                                 <input id="uploadResultUrl" class="form-control upload-result-copy-input" type="text" readonly value="{{uploadResultUrl}}" ng-click="$event.target.select()">
                                 <button class="btn btn-default upload-result-copy-button" type="button" ng-click="copyUploadResult(uploadResultUrl, 'url')" ng-disabled="!uploadResultUrl">
-                                    <i class="fa" ng-class="uploadResultCopied == 'url' ? 'fa-check' : 'fa-copy'"></i>
+                                    <span ct-icon="{{uploadResultCopied == 'url' ? 'check' : 'copy'}}"></span>
                                     <span ng-if="uploadResultCopied != 'url'" translate>results-copy</span>
                                     <span ng-if="uploadResultCopied == 'url'" translate>results-copied</span>
                                 </button>
@@ -315,13 +316,13 @@
 
                 <div ng-show="uploadresults && uploadresults.result != 'Success' && uploadresults.error" class="upload-result-card">
                     <p class="preview-result-note preview-result-danger upload-failure-note upload-result-message">
-                        <i class="fa fa-times-circle"></i>
+                        <span ct-icon="error"></span>
                         <span translate translate-value-error="{{uploadresults.error.info}}">results-failure</span>
                     </p>
                 </div>
 
                 <div ng-show="uploadresults && uploadresults.result == 'Success' && uploadresults.elems.wikidata" class="preview-result-note preview-result-info upload-wikidata-note">
-                    <i class="fa fa-info-circle"></i>
+                    <span ct-icon="info"></span>
                     <span translate translate-values="{ link: cropresults.wikidataLink }">results-success-wikidata</span>
                 </div>
 
@@ -371,7 +372,7 @@
                                     </span>
                                 </span>
                                 <button type="button" class="btn btn-default orientation-btn ratio-lock-btn" ng-click="toggleAspectRatioLock()" title="{{(aspectratio == 'free' ? 'cropform-aspect-ratio-lock' : 'cropform-aspect-ratio-unlock') | translate}}">
-                                    <i class="fa" ng-class="aspectratio == 'free' ? 'fa-unlock' : 'fa-lock'"></i>
+                                    <span ct-icon="{{aspectratio == 'free' ? 'un-lock' : 'lock'}}"></span>
                                     <span class="sr-only" ng-if="aspectratio == 'free'" translate>cropform-aspect-ratio-lock</span>
                                     <span class="sr-only" ng-if="aspectratio != 'free'" translate>cropform-aspect-ratio-unlock</span>
                                 </button>
@@ -428,11 +429,11 @@
                                         <span class="input-group-addon" aria-hidden="true">&deg;</span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn ladda-button" ng-click="autoStraighten()" ng-disabled="autoStraightenBusy" ladda="autoStraightenBusy" data-style="zoom-in" title="{{'cropform-straighten-auto' | translate}}">
-                                        <i class="fa fa-magic"></i>
+                                        <span ct-icon="magic-wand"></span>
                                         <span class="sr-only" translate>cropform-straighten-auto</span>
                                     </button>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetOrientation()" ng-disabled="!orientationActive()" title="{{'cropform-orientation-reset' | translate}}">
-                                        <i class="fa fa-times-circle"></i>
+                                        <span ct-icon="restart"></span>
                                         <span class="sr-only" translate>cropform-orientation-reset</span>
                                     </button>
                                 </div>
@@ -443,11 +444,11 @@
                         </div>
                         <div class="orientation-toolbar">
                             <button type="button" class="btn btn-default orientation-btn" ng-click="rotateLeft()" title="{{'cropform-rotate-left' | translate}}">
-                                <i class="fa fa-rotate-left"></i>
+                                <span ct-icon="undo"></span>
                                 <span class="sr-only" translate>cropform-rotate-left</span>
                             </button>
                             <button type="button" class="btn btn-default orientation-btn" ng-click="rotateRight()" title="{{'cropform-rotate-right' | translate}}">
-                                <i class="fa fa-rotate-right"></i>
+                                <span ct-icon="redo"></span>
                                 <span class="sr-only" translate>cropform-rotate-right</span>
                             </button>
                         </div>
@@ -498,7 +499,7 @@
 
                     <div class="crop-actions crop-dim-actions">
                         <button type="button" class="btn btn-default crop-action-btn" ng-click="locateBorder()" ng-disabled="borderLocatorBusy" ladda="borderLocatorBusy" data-style="slide-up">
-                            <i class="fa fa-magic"></i>
+                            <span ct-icon="magic-wand"></span>
                             <span translate>cropform-border-locator</span>
                         </button>
                     </div>
@@ -519,11 +520,11 @@
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('brightness')" title="{{'cropform-adjustments-auto' | translate}}">
-                                        <i class="fa fa-magic"></i>
+                                        <span ct-icon="magic-wand"></span>
                                         <span class="sr-only" translate>cropform-adjustments-auto</span>
                                     </button>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('brightness')" ng-disabled="!filterActive('brightness')" title="{{'cropform-adjustments-reset' | translate}}">
-                                        <i class="fa fa-times-circle"></i>
+                                        <span ct-icon="restart"></span>
                                         <span class="sr-only" translate>cropform-adjustments-reset</span>
                                     </button>
                                 </div>
@@ -542,11 +543,11 @@
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('contrast')" title="{{'cropform-adjustments-auto' | translate}}">
-                                        <i class="fa fa-magic"></i>
+                                        <span ct-icon="magic-wand"></span>
                                         <span class="sr-only" translate>cropform-adjustments-auto</span>
                                     </button>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('contrast')" ng-disabled="!filterActive('contrast')" title="{{'cropform-adjustments-reset' | translate}}">
-                                        <i class="fa fa-times-circle"></i>
+                                        <span ct-icon="restart"></span>
                                         <span class="sr-only" translate>cropform-adjustments-reset</span>
                                     </button>
                                 </div>
@@ -565,11 +566,11 @@
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('saturation')" title="{{'cropform-adjustments-auto' | translate}}">
-                                        <i class="fa fa-magic"></i>
+                                        <span ct-icon="magic-wand"></span>
                                         <span class="sr-only" translate>cropform-adjustments-auto</span>
                                     </button>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-reset-btn" ng-click="resetFilter('saturation')" ng-disabled="!filterActive('saturation')" title="{{'cropform-adjustments-reset' | translate}}">
-                                        <i class="fa fa-times-circle"></i>
+                                        <span ct-icon="restart"></span>
                                         <span class="sr-only" translate>cropform-adjustments-reset</span>
                                     </button>
                                 </div>
@@ -632,14 +633,14 @@
                 <div ng-show="cropresults && !uploadresults">
 
                     <p class="preview-result-note preview-result-success" ng-show="cropresults.method=='precise'">
-                        <i class="fa fa-check-circle"></i>
+                        <span ct-icon="success"></span>
                         <span translate>previewform-precise-crop-performed</span>
                     </p>
 
                     <a class="preview-result-note preview-result-info lossless-banner-link"
                        ng-show="cropresults.method=='lossless'"
                        href="https://en.wikipedia.org/wiki/JPEG#Lossless_editing">
-                        <i class="fa fa-check-circle"></i>
+                        <span ct-icon="success"></span>
                         <span>
                             <span translate>previewform-lossless-crop-performed</span>
                             <span ng-show="cropresults.crop.width!=crop_dim.w || cropresults.crop.height!=crop_dim.h">
@@ -653,22 +654,22 @@
                         <div>
 
                             <p class="preview-result-note preview-result-warning" ng-show="cropresults.page.hasAssessmentTemplates">
-                                <i class="fa fa-warning"></i>
+                                <span ct-icon="alert"></span>
                                 <span translate>previewform-assessment-template</span>
                             </p>
 
                             <p class="preview-result-note preview-result-warning" ng-show="cropresults.page.hasDoNotCropTemplate">
-                                <i class="fa fa-warning"></i>
+                                <span ct-icon="alert"></span>
                                 <span translate>previewform-donotcrop-template</span>
                             </p>
 
                             <p class="preview-result-note preview-result-warning" ng-show="cropresults.page.hasUploadProtection">
-                                <i class="fa fa-lock"></i>
+                                <span ct-icon="lock"></span>
                                 <span translate>previewform-upload-protected</span>
                             </p>
 
                             <p class="preview-result-note preview-result-warning" ng-show="currentUrlParams.page">
-                                <i class="fa fa-warning"></i>
+                                <span ct-icon="alert"></span>
                                 <span translate>previewform-multipage-file</span>
                             </p>
 
@@ -694,7 +695,7 @@
                                 popover-placement="bottom"
                                 popover-popup-delay="0.5"
                             >
-                                <i class="fa fa-warning"></i>
+                                <span ct-icon="alert"></span>
                                 <span translate translate-value-url="{{commonsOverwriteUrl()}}">previewform-overwrite-policy</span>
                             </p>
 
@@ -704,7 +705,7 @@
                                 </label>
                                 <input id="newTitle" type="text" class="form-control" ng-model="newTitle" ng-disabled="ladda2">
                                 <p class="preview-result-note preview-result-question filename-tip-note" ng-show="newTitle == suggestedNewTitle && exists[currentUrlParams.site + ':' + newTitle] !== true">
-                                    <i class="fa fa-hand-o-up"></i>
+                                    <span ct-icon="help-notice"></span>
                                     <span translate>previewform-rename-tip</span>
                                 </p>
                                 <div class="filename-conflict-panel" ng-show="exists[currentUrlParams.site + ':' + newTitle] === true">
@@ -715,11 +716,11 @@
                                         popover-placement="bottom"
                                         popover-popup-delay="0.5"
                                     >
-                                        <i class="fa fa-warning"></i>
+                                        <span ct-icon="alert"></span>
                                         <span class="filename-conflict-message">
                                             <a class="filename-existing-link" ng-href="{{existingFileUrl()}}" target="_blank" rel="noopener">
                                                 <span translate>previewform-new-title-exists</span>
-                                                <i class="fa fa-external-link" aria-hidden="true"></i>
+                                                <span ct-icon="link-external"></span>
                                             </a>
                                             <br>
                                             <span translate translate-value-url="{{commonsOverwriteUrl()}}">previewform-new-title-exists-overwrite-warning</span>
@@ -728,7 +729,7 @@
                                         <label for="confirmOverwriteConflict" class="conflict-ack-overlay" ng-class="{disabled: ladda2}"></label>
                                         <label for="confirmOverwriteConflict" class="conflict-ack-option" ng-class="{selected: confirmOverwrite, disabled: ladda2}">
                                             <span class="conflict-ack-button">
-                                                <i class="fa fa-check" ng-show="confirmOverwrite"></i>
+                                                <span ct-icon="check" ng-show="confirmOverwrite"></span>
                                                 <span translate>previewform-new-title-exists-confirm-overwrite</span>
                                             </span>
                                         </label>

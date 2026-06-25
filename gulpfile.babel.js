@@ -70,9 +70,19 @@ export function build () {
             '<script src="' + manifest['vendor.js'] + '"></script>'
           );
         }
+        if (manifest['app.js']) {
+          html = html.replace(
+            /<!-- build:js js\/app(?:-[a-f0-9]+)?\.js-->\s*[\s\S]*?<!-- endbuild -->/,
+            '<script src="' + manifest['app.js'] + '"></script>'
+          );
+        }
         html = html.replace(
           /href="(css\/app-[^"]+\.css)"/,
           'href="$1?version=' + assetVersion + '"'
+        );
+        html = html.replace(
+          /window\.CropToolAssetVersion = 'dev';/,
+          "window.CropToolAssetVersion = '" + assetVersion + "';"
         );
         file.contents = Buffer.from(html);
       }

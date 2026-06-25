@@ -7,10 +7,30 @@ config(['$translateProvider', function($translateProvider) {
     $translateProvider.useSanitizeValueStrategy('escapeParameters');
     $translateProvider.useStaticFilesLoader({
         prefix: 'i18n/',
-        suffix: '.json'
+        suffix: '.json?version=' + encodeURIComponent(window.CropToolAssetVersion || 'dev')
     });
     $translateProvider.fallbackLanguage('en');
     $translateProvider.preferredLanguage('en');
+}]).
+
+directive('ctIcon', [function() {
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+            attrs.$observe('ctIcon', renderIcon);
+
+            function renderIcon(name) {
+                var path = window.CropToolCodexIcons && window.CropToolCodexIcons[name];
+                element.addClass('ct-icon');
+                element.attr('aria-hidden', 'true');
+                if (!path) {
+                    element.empty();
+                    return;
+                }
+                element.html('<svg viewBox="0 0 20 20" focusable="false">' + path + '</svg>');
+            }
+        }
+    };
 }]).
 
 service('LoginService', ['$http', '$rootScope', function($http, $rootScope) {
@@ -21,6 +41,9 @@ service('LoginService', ['$http', '$rootScope', function($http, $rootScope) {
 
     this.checkLogin = function(res) {
         var data = res.data;
+        if (location.search.indexOf('loggedout=1') !== -1) {
+            data.user = undefined;
+        }
         if (data.user) {
             that.user = {
                 name: data.user,
@@ -310,7 +333,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         { code: 'es', label: 'Espanol' }
     ];
     var storedLanguage = LocalStorageService.get('croptool-language');
-    $scope.currentLanguage = storedLanguage || 'en';
+    var urlLanguage = (getParameterByName('uselang') || getParameterByName('lang')).toLowerCase();
+    $scope.currentLanguage = languageAvailable(urlLanguage) ? urlLanguage : storedLanguage || 'en';
     useInterfaceLanguage($scope.currentLanguage);
     $scope.changeLanguage = function(language) {
         useInterfaceLanguage(language);
