@@ -175,6 +175,10 @@ h2 {
     display: none;
 }
 
+.file-summary select {
+    min-width: 3.5em;
+}
+
 .title-submit-button {
     width: 100%;
 }

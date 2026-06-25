@@ -257,7 +257,8 @@
                         <span translate>page</span>:
                         <select ng-model="currentUrlParams.page"
                                 ng-options="option for option in availablePages track by option"
-                                ng-change="pageChanged()"></select>
+                                ng-change="pageChanged()"
+                                style="min-width:3.5em"></select>
                     </span>
                 </p>
 
