@@ -308,10 +308,12 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         { code: 'nl', label: 'Nederlands' },
         { code: 'fr', label: 'Francais' },
         { code: 'de', label: 'Deutsch' },
-        { code: 'es', label: 'Espanol' }
+        { code: 'es', label: 'Espanol' },
+        { code: 'he', label: 'עברית' }
     ];
     var storedLanguage = LocalStorageService.get('croptool-language');
-    $scope.currentLanguage = storedLanguage || 'en';
+    var urlLanguage = (getParameterByName('uselang') || getParameterByName('lang') || '').toLowerCase();
+    $scope.currentLanguage = languageAvailable(urlLanguage) ? urlLanguage : storedLanguage || 'en';
     useInterfaceLanguage($scope.currentLanguage);
     $scope.changeLanguage = function(language) {
         useInterfaceLanguage(language);
