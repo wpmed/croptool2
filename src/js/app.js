@@ -569,6 +569,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             $scope.crop_dim.w > 0 && $scope.crop_dim.h > 0;
     }
 
+    $scope.clampCropDimensions = function() {
+        clampCropDimensions();
+    };
+
     function clampCropDimensions(current_coord, ratio) {
         if (!$scope.metadata || !$scope.metadata.original || !$scope.crop_dim) {
             return;
