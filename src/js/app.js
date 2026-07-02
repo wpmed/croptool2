@@ -980,7 +980,18 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
     $scope.startTouchStep = function(dimension, baseStep, $event) {
         $event.preventDefault();
-        $scope.startCropStep(dimension, baseStep);
+        // Single step on touch; no acceleration (too twitchy on mobile)
+        $scope.stepCropDimension(dimension, baseStep);
+    };
+
+    $scope.startTouchStraighten = function(baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepStraighten(baseStep);
+    };
+
+    $scope.startTouchFilter = function(filter, baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepFilter(filter, baseStep);
     };
 
     $scope.startStraightenStep = function(baseStep) {
