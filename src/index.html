@@ -228,7 +228,7 @@ window.CropToolAssetVersion = 'dev';
                         compare-end="endFilterComparison()"
                         ng-attr-aria-pressed="{{!filterPreviewEnabled}}"
                         title="{{'cropform-adjustments-compare-preview' | translate}}"
-                        aria-label="{{'cropform-adjustments-compare-preview' | translate}}"
+                        ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-compare-preview' | translate}}"
                     >
                         <span ct-icon="{{filterPreviewEnabled ? 'eye' : 'eye-closed'}}"></span>
                     </button>
