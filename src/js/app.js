@@ -978,6 +978,11 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         }, timeout);
     };
 
+    $scope.startTouchStep = function(dimension, baseStep, $event) {
+        $event.preventDefault();
+        $scope.startCropStep(dimension, baseStep);
+    };
+
     $scope.startStraightenStep = function(baseStep) {
         stepAccel = null;
         $scope.stepStraighten(baseStep);
