@@ -357,18 +357,18 @@ window.CropToolAssetVersion = 'dev';
                             <div class="ratio-control">
                                 <span class="ratio-input-pair" ng-class="{locked: aspectratio != 'free'}">
                                     <span class="ratio-number-control">
-                                        <input type="number" min="1" ng-model="aspectratio_cx" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-width' | translate}}">
+                                        <input type="number" min="1" ng-model="aspectratio_cx" ng-change="aspectRatioFieldsChanged()" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-aspect-ratio-width' | translate}}">
                                         <span class="ratio-stepper">
-                                            <button type="button" ng-click="stepAspectRatio('x', 1)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                            <button type="button" ng-click="stepAspectRatio('x', -1)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('x', 1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('x', -1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                                         </span>
                                     </span>
                                     <span aria-hidden="true">:</span>
                                     <span class="ratio-number-control">
-                                        <input type="number" min="1" ng-model="aspectratio_cy" ng-change="aspectRatioFieldsChanged()" aria-label="{{'cropform-aspect-ratio-height' | translate}}">
+                                        <input type="number" min="1" ng-model="aspectratio_cy" ng-change="aspectRatioFieldsChanged()" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-aspect-ratio-height' | translate}}">
                                         <span class="ratio-stepper">
-                                            <button type="button" ng-click="stepAspectRatio('y', 1)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                            <button type="button" ng-click="stepAspectRatio('y', -1)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('y', 1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                            <button type="button" ng-click="stepAspectRatio('y', -1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                                         </span>
                                     </span>
                                 </span>
@@ -418,12 +418,12 @@ window.CropToolAssetVersion = 'dev';
                                 <input class="straighten-angle-slider" type="range" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()" aria-labelledby="straightenLabel">
                                 <div class="value-action-group">
                                     <div class="input-group straighten-angle-input">
-                                        <input id="straightenInput" class="form-control" type="number" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()" aria-label="{{'cropform-straighten' | translate}}">
+                                        <input id="straightenInput" class="form-control" type="number" min="-15" max="15" step="0.1" ng-model="rotation.straightenAngle" ng-change="straightenChanged()" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-straighten' | translate}}">
                                         <span class="input-group-btn straighten-stepper">
-                                            <button type="button" class="btn btn-default" ng-click="stepStraighten(0.1)" title="{{'cropform-straighten-increase' | translate}}" aria-label="{{'cropform-straighten-increase' | translate}}">
+                                            <button type="button" class="btn btn-default" ng-mousedown="startStraightenStep(0.1)" title="{{'cropform-straighten-increase' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-straighten-increase' | translate}}">
                                                 <span class="straighten-stepper-arrow straighten-stepper-arrow-up" aria-hidden="true"></span>
                                             </button>
-                                            <button type="button" class="btn btn-default" ng-click="stepStraighten(-0.1)" title="{{'cropform-straighten-decrease' | translate}}" aria-label="{{'cropform-straighten-decrease' | translate}}">
+                                            <button type="button" class="btn btn-default" ng-mousedown="startStraightenStep(-0.1)" title="{{'cropform-straighten-decrease' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-straighten-decrease' | translate}}">
                                                 <span class="straighten-stepper-arrow straighten-stepper-arrow-down" aria-hidden="true"></span>
                                             </button>
                                         </span>
@@ -459,10 +459,10 @@ window.CropToolAssetVersion = 'dev';
                         <label>
                           {{ 'top' | translate }}
                           <span class="cropdim-input-control">
-                              <input type="number" step="10" ng-model="crop_dim.y" ng-change="onCropDimChange('y')">
+                              <input type="number" step="1" ng-model="crop_dim.y" ng-change="onCropDimChange('y')">
                               <span class="cropdim-stepper">
-                                  <button type="button" ng-click="stepCropDimension('y', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                  <button type="button" ng-click="stepCropDimension('y', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                  <button type="button" ng-mousedown="startCropStep('y', 1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                  <button type="button" ng-mousedown="startCropStep('y', -1)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                               </span>
                           </span>
                         </label>
@@ -471,8 +471,8 @@ window.CropToolAssetVersion = 'dev';
                             <span class="cropdim-input-control">
                                 <input type="number" step="10" ng-model="crop_dim.x" ng-change="onCropDimChange('x')">
                                 <span class="cropdim-stepper">
-                                    <button type="button" ng-click="stepCropDimension('x', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                    <button type="button" ng-click="stepCropDimension('x', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('x', 10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('x', -10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                                 </span>
                             </span>
                         </label>
@@ -481,8 +481,8 @@ window.CropToolAssetVersion = 'dev';
                             <span class="cropdim-input-control">
                                 <input type="number" step="10" ng-model="crop_dim.w" ng-change="onCropDimChange('w')">
                                 <span class="cropdim-stepper">
-                                    <button type="button" ng-click="stepCropDimension('w', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                    <button type="button" ng-click="stepCropDimension('w', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('w', 10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('w', -10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                                 </span>
                             </span>
                         </label>
@@ -491,8 +491,8 @@ window.CropToolAssetVersion = 'dev';
                             <span class="cropdim-input-control">
                                 <input type="number" step="10" ng-model="crop_dim.h" ng-change="onCropDimChange('h')">
                                 <span class="cropdim-stepper">
-                                    <button type="button" ng-click="stepCropDimension('h', 10)" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
-                                    <button type="button" ng-click="stepCropDimension('h', -10)" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('h', 10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up"></span></button>
+                                    <button type="button" ng-mousedown="startCropStep('h', -10)" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-value-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down"></span></button>
                                 </span>
                             </span>
                         </label>
@@ -514,10 +514,10 @@ window.CropToolAssetVersion = 'dev';
                                 <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.brightness" aria-labelledby="brightnessLabel">
                                 <div class="value-action-group">
                                     <div class="input-group filter-value-input">
-                                        <input id="brightnessInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.brightness" aria-label="{{'cropform-brightness' | translate}}">
+                                        <input id="brightnessInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.brightness" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-brightness' | translate}}">
                                         <span class="input-group-btn value-stepper">
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('brightness', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('brightness', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('brightness', 1)" title="{{'cropform-adjustments-increase' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('brightness', -1)" title="{{'cropform-adjustments-decrease' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('brightness')" title="{{'cropform-adjustments-auto' | translate}}">
@@ -537,10 +537,10 @@ window.CropToolAssetVersion = 'dev';
                                 <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.contrast" aria-labelledby="contrastLabel">
                                 <div class="value-action-group">
                                     <div class="input-group filter-value-input">
-                                        <input id="contrastInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.contrast" aria-label="{{'cropform-contrast' | translate}}">
+                                        <input id="contrastInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.contrast" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-contrast' | translate}}">
                                         <span class="input-group-btn value-stepper">
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('contrast', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('contrast', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('contrast', 1)" title="{{'cropform-adjustments-increase' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('contrast', -1)" title="{{'cropform-adjustments-decrease' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('contrast')" title="{{'cropform-adjustments-auto' | translate}}">
@@ -560,10 +560,10 @@ window.CropToolAssetVersion = 'dev';
                                 <input class="filter-value-slider" type="range" min="-100" max="100" step="1" ng-model="filters.saturation" aria-labelledby="saturationLabel">
                                 <div class="value-action-group">
                                     <div class="input-group filter-value-input">
-                                        <input id="saturationInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.saturation" aria-label="{{'cropform-saturation' | translate}}">
+                                        <input id="saturationInput" class="form-control" type="number" min="-100" max="100" step="1" ng-model="filters.saturation" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-saturation' | translate}}">
                                         <span class="input-group-btn value-stepper">
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('saturation', 1)" title="{{'cropform-adjustments-increase' | translate}}" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
-                                            <button type="button" class="btn btn-default" ng-click="stepFilter('saturation', -1)" title="{{'cropform-adjustments-decrease' | translate}}" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('saturation', 1)" title="{{'cropform-adjustments-increase' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-increase' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-up" aria-hidden="true"></span></button>
+                                            <button type="button" class="btn btn-default" ng-mousedown="startFilterStep('saturation', -1)" title="{{'cropform-adjustments-decrease' | translate}}" ng-mouseup="stopStep()" ng-mouseleave="stopStep()" aria-label="{{'cropform-adjustments-decrease' | translate}}"><span class="value-stepper-arrow value-stepper-arrow-down" aria-hidden="true"></span></button>
                                         </span>
                                     </div>
                                     <button type="button" class="btn btn-default orientation-btn value-action-btn value-auto-btn" ng-click="autoFilter('saturation')" title="{{'cropform-adjustments-auto' | translate}}">
