@@ -1237,6 +1237,26 @@ form {
     background: #fff;
 }
 
+.cropdim:not(.aspect-ratio-values) input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.cropdim:not(.aspect-ratio-values) input[type="number"]:focus {
+    appearance: auto;
+    -moz-appearance: auto;
+}
+
+.cropdim:not(.aspect-ratio-values) input[type="number"]::-webkit-inner-spin-button,
+.cropdim:not(.aspect-ratio-values) input[type="number"]::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+.cropdim:not(.aspect-ratio-values) input[type="number"]:focus::-webkit-inner-spin-button,
+.cropdim:not(.aspect-ratio-values) input[type="number"]:focus::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
 
 .cropdim-input-control {
     display: flex;
