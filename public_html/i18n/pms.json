@@ -60,7 +60,10 @@
 	"cropform-aspect-ratio-keep": "Original",
 	"cropform-aspect-ratio-square": "Quadrà",
 	"cropform-aspect-ratio-fixed": "Përsonalisà",
+	"cropform-adjustments": "Precision",
 	"cropform-brightness": "Luminosità",
 	"cropform-contrast": "Contrast",
-	"cropform-saturation": "Saturassion"
+	"cropform-saturation": "Saturassion",
+	"cropform-adjustments-auto": "Automàtich",
+	"cropform-adjustments-reset": "Buté torna coma al prinsipi"
 }
