@@ -86,5 +86,17 @@
 	"previewform-rename-tip": "Ch'a consìdera d'agiorné ël nòm ëd l'archivi.",
 	"previewform-multipage-file": "L'opsion dë dzorascritura a l'é disabilità përchè cost-sì a l'é n'archivi ëd vàire pàgine.",
 	"previewform-removed-border": "I l'hai gavà la bordura",
-	"previewform-removed-border-help": "A confirma l'eliminassion ëd lë stamp 'gavé la bordura'"
+	"previewform-removed-border-help": "A confirma l'eliminassion ëd lë stamp 'gavé la bordura'",
+	"previewform-trimmed": "I l'hai artajà la plancia",
+	"previewform-trimmed-help": "A confirma l'eliminassion ëd lë stamp 'artajé'",
+	"previewform-removed-watermark": "I l'hai gavà la dzorascrita",
+	"previewform-removed-watermark-help": "A confirma l'eliminassion ëd lë stamp 'dzorascrita'",
+	"previewform-wikidata-crop": "Gionté la plancia a Wikidata tanme ilustrassion ëd {{link}}",
+	"previewform-wikidata-crop-help": "Gionté la plancia artajà tanme n'ilustrassion (P18) ëd l'element ëd dàit ëd Wikidata.",
+	"previewform-overwrite": "Dzorascrive",
+	"previewform-create-new": "Carié tanme n'archivi neuv",
+	"previewform-new-title": "Neuv nòm d'archivi",
+	"previewform-metadata": "Metadàit da copié",
+	"previewform-categories": "Categorìe",
+	"previewform-new-title-exists": "Ës nòm d'archivi a esist già."
 }
