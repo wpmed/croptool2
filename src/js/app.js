@@ -569,6 +569,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             $scope.crop_dim.w > 0 && $scope.crop_dim.h > 0;
     }
 
+    $scope.clampCropDimensions = function() {
+        clampCropDimensions();
+    };
+
     function clampCropDimensions(current_coord, ratio) {
         if (!$scope.metadata || !$scope.metadata.original || !$scope.crop_dim) {
             return;
@@ -943,6 +947,83 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
     $scope.straightenChanged = function() {
         updateRotationAngle();
+    };
+
+    // Accelerated stepper: held buttons go from slow to fast
+    var stepTimer = null, stepAccel = null;
+
+    function stepOnce(dimension, baseStep) {
+        if (!$scope.crop_dim || !Object.prototype.hasOwnProperty.call($scope.crop_dim, dimension)) {
+            return;
+        }
+        var value = parseInt($scope.crop_dim[dimension]);
+        var step = stepAccel ? baseStep * stepAccel : baseStep;
+        $scope.crop_dim[dimension] = (isNaN(value) ? 0 : value) + step;
+        $scope.onCropDimChange(dimension);
+    }
+
+    function stepAccelerate() {
+        stepAccel = (stepAccel || 1) + 2;
+    }
+
+    $scope.startCropStep = function(dimension, baseStep) {
+        stepAccel = null;
+        stepOnce(dimension, baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            stepOnce(dimension, baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.startTouchStep = function(dimension, baseStep, $event) {
+        $event.preventDefault();
+        // Single step on touch; no acceleration (too twitchy on mobile)
+        $scope.stepCropDimension(dimension, baseStep);
+    };
+
+    $scope.startTouchStraighten = function(baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepStraighten(baseStep);
+    };
+
+    $scope.startTouchFilter = function(filter, baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepFilter(filter, baseStep);
+    };
+
+    $scope.startStraightenStep = function(baseStep) {
+        stepAccel = null;
+        $scope.stepStraighten(baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            $scope.stepStraighten(baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.startFilterStep = function(filter, baseStep) {
+        stepAccel = null;
+        $scope.stepFilter(filter, baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            $scope.stepFilter(filter, baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.stopStep = function() {
+        if (stepTimer) {
+            clearTimeout(stepTimer);
+            stepTimer = null;
+        }
+        stepAccel = null;
     };
 
     $scope.stepCropDimension = function(dimension, step) {
