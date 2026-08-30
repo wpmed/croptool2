@@ -14,7 +14,7 @@ class SvgFile extends File implements FileInterface
         'image/svg+xml' => '.svg',
     ];
 
-    static private function convertUnit( $length ) {
+    static private function convertUnit( $length, $viewportSize ) {
         // This is based on MediaWiki's SvgReader::scaleSVGUnit
         static $unitLength = [
             'px' => 1.0,
@@ -110,11 +110,15 @@ class SvgFile extends File implements FileInterface
 
         // MediaWiki uses a default size of 512x512 for SVGs.
         // Note: Unlike the case where all 3 are unset, this is not 300x150 according to spec.
+        // A percentage width/height resolves against the viewBox dimensions when present,
+        // otherwise against the 512px default viewport (as MediaWiki does).
+        $viewportWidth = isset( $viewBoxArr ) ? $viewBoxArr[2] : 512;
+        $viewportHeight = isset( $viewBoxArr ) ? $viewBoxArr[3] : 512;
         if ( $width !== 'auto' ) {
-            $calcWidth = self::convertUnit( $width, 512 );
+            $calcWidth = self::convertUnit( $width, $viewportWidth );
         }
         if ( $height !== 'auto' ) {
-            $calcHeight = self::convertUnit( $height, 512 );
+            $calcHeight = self::convertUnit( $height, $viewportHeight );
         }
 
         if ( !isset( $calcWidth ) && !isset( $calcHeight ) ) {
@@ -182,7 +186,9 @@ class SvgFile extends File implements FileInterface
                 while( $reader->moveToNextAttribute() ) {
                     if (
                         $reader->namespaceURI === '' &&
-                        in_array( $reader->localName, [ 'width', 'height', 'viewBox' ] ) ) {
+                        in_array( $reader->localName, [ 'width', 'height', 'viewBox', 'x', 'y' ] ) ) {
+                        // x/y are ignored on a root <svg> and only mislead: the
+                        // crop region is fully defined by width/height/viewBox.
                         continue;
                     }
                     $openingElm .= ' ' . $reader->name . '=';

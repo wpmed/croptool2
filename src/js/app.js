@@ -152,19 +152,19 @@ directive('ctCropper', ['$timeout', function($timeout) {
 
             function initCropper() {
                 destroyCropper();
-                // SVG files might not contain an explicit width/height in
-                // which case the size of the browsers viewport is used.
-                // Enforce that we always use the server's calculation for image width/height.
-                Object.defineProperty(
-                        element[0],
-                        'naturalWidth',
-                        { value: element[0].getAttribute( 'width' ) }
-                );
-                Object.defineProperty(
-                        element[0],
-                        'naturalHeight',
-                        { value: element[0].getAttribute( 'height' ) }
-                );
+                // The browser computes the intrinsic size of an SVG that has no
+                // explicit width/height (e.g. a viewBox-only SVG) as 150px tall
+                // (Chrome), which can differ from the server-reported size
+                // (MediaWiki defaults such SVGs to 512px). Report the browser's
+                // size so the controller can scale Cropper.js coordinates to the
+                // server's coordinate space. Note: this cannot be done by
+                // overriding naturalWidth/naturalHeight here, because
+                // Cropper.js 1.6.x reads those from a clone of the image, not
+                // from this element.
+                scope.$emit('cropbox-natural-size', {
+                    width: element[0].naturalWidth,
+                    height: element[0].naturalHeight
+                });
                 scope.cropper = new Cropper(element[0], {
                     aspectRatio: scope.aspectRatio,
                     crop: cropperCrop,
@@ -618,6 +618,16 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.crop_dim.bottom = $scope.metadata.original.height - $scope.crop_dim.y - $scope.crop_dim.h;
     }
 
+    $scope.$on('cropbox-natural-size', function(event, size) {
+        if (!$scope.metadata || $scope.metadata.thumb) {
+            return;
+        }
+        var original = $scope.metadata.original;
+        if (size && size.width > 0 && size.height > 0 && original && original.width && original.height) {
+            pixelratio = [original.width / size.width, original.height / size.height];
+        }
+    });
+
     $scope.$on('loginStatusChanged', function() {
 
         if (LoginService.user) {
@@ -754,6 +764,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             if ($scope.metadata.thumb) {
                 pixelratio = [$scope.metadata.original.width/$scope.metadata.thumb.width, $scope.metadata.original.height/$scope.metadata.thumb.height];
             } else {
+                // Files without a thumbnail (SVGs) are shown via the original
+                // image. The cropbox-natural-size event will set the correct
+                // pixelratio once the image has loaded.
                 pixelratio = [1,1];
             }
 
@@ -892,7 +905,15 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             return null;
         }
 
-        return ($scope.cropresults.thumb ? $scope.cropresults.thumb.width : $scope.cropresults.crop.width);
+        if ($scope.cropresults.thumb) {
+            // Raster thumbnails are already capped at the thumbnail size (800px).
+            return $scope.cropresults.thumb.width;
+        }
+
+        // SVG crops (and small crops that don't get a thumbnail) are otherwise
+        // rendered at their own pixel size: tiny crops become invisible and huge
+        // crops overflow the layout. Bound the preview box to a sensible size.
+        return Math.min(Math.max($scope.cropresults.crop.width, 240), 800);
     };
 
     $scope.previewBoxStyle = function() {
