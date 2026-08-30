@@ -344,10 +344,27 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
     $scope.availableLanguages = [
         { code: 'en', label: 'English' },
-        { code: 'nl', label: 'Nederlands' },
-        { code: 'fr', label: 'Francais' },
+        { code: 'az', label: 'Azərbaycanca' },
+        { code: 'da', label: 'Dansk' },
         { code: 'de', label: 'Deutsch' },
-        { code: 'es', label: 'Espanol' },
+        { code: 'es', label: 'Español' },
+        { code: 'fa', label: 'فارسی' },
+        { code: 'fr', label: 'Français' },
+        { code: 'ga', label: 'Gaeilge' },
+        { code: 'gl', label: 'Galego' },
+        { code: 'ko', label: '한국어' },
+        { code: 'lb', label: 'Lëtzebuergesch' },
+        { code: 'mk', label: 'Македонски' },
+        { code: 'ms', label: 'Bahasa Melayu' },
+        { code: 'nl', label: 'Nederlands' },
+        { code: 'pms', label: 'Piemontèis' },
+        { code: 'ps', label: 'پښتو' },
+        { code: 'ru', label: 'Русский' },
+        { code: 'sk', label: 'Slovenčina' },
+        { code: 'sv', label: 'Svenska' },
+        { code: 'tr', label: 'Türkçe' },
+        { code: 'zh-hans', label: '中文（简体）' },
+        { code: 'zh-hant', label: '中文（繁體）' },
         { code: 'zh', label: '中文' }
     ];
     var storedLanguage = LocalStorageService.get('croptool-language');
