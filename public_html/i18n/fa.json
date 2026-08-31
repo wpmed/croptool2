@@ -64,6 +64,8 @@
 	"previewform-lossless-crop-performed": "برش بدون افت کیفیت با موفقیت انجام شد.",
 	"previewform-lossless-explanation": "حالت بدون افت ممکن است شامل چند پیکسل اضافی باشد.",
 	"previewform-precise-crop-performed": "یک برش دقیق انجام شد.",
+	"previewform-assessment-template": "گزینه بازنویسی غیرفعال است زیرا تصویر فرآیند ارزیابی را پشت سر گذاشته است.",
+	"previewform-rename-tip": "به‌روزرسانی نام پرونده را در نظر بگیرید.",
 	"previewform-overwrite": "بازنویسی",
 	"previewform-create-new": "بارگذاری به عنوان پروندهٔ جدید",
 	"previewform-new-title": "نام پروندهٔ جدید",
