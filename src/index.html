@@ -270,7 +270,7 @@ window.CropToolAssetVersion = 'dev';
                         <span translate translate-value-width="{{cropresults.crop.width}}" translate-value-height="{{cropresults.crop.height}}">crop-dimensions</span>
                     </span>
 
-                    <span ng-show="currentUrlParams.page">
+                    <span ng-show="currentUrlParams.page && !cropresults && !uploadresults">
                         <span translate>page</span>:
                         <select ng-model="currentUrlParams.page"
                                 ng-options="option for option in availablePages track by option"
@@ -611,8 +611,9 @@ window.CropToolAssetVersion = 'dev';
                         </div>
                     </div>
 
-                    <div style="color:red; padding:1em 0;" ng-show="error">
-                        {{error}}
+                    <div class="preview-result-note preview-result-danger" ng-show="error">
+                        <span ct-icon="alert"></span>
+                        <span>{{error}}</span>
                     </div>
 
                     <div class="crop-submit-actions">
@@ -801,8 +802,9 @@ window.CropToolAssetVersion = 'dev';
                             <textarea rows="4" id="uploadComment" type="text" class="form-control" ng-model="uploadComment" ng-disabled="ladda2"></textarea>
                         </div>
 
-                        <div style="color:red; margin-bottom: 1em;" ng-show="error">
-                            {{error}}
+                        <div class="preview-result-note preview-result-danger upload-failure-note" ng-show="error">
+                            <span ct-icon="alert"></span>
+                            <span>{{error}}</span>
                         </div>
 
                         <div ng-show="allowIgnoreWarnings">
@@ -810,6 +812,15 @@ window.CropToolAssetVersion = 'dev';
                                 <input type="checkbox" ng-model="ignoreWarnings">
                                 Ignore warnings (please use with care)
                             </label>
+                        </div>
+
+                        <div class="ct-upload-progress" ng-show="ladda2">
+                            <div class="ct-upload-progress-bar" ng-class="{indeterminate: uploadProgressIndeterminate()}">
+                                <div class="ct-upload-progress-fill" ng-style="{width: uploadProgressPercent() + '%'}"></div>
+                            </div>
+                            <div class="ct-upload-progress-label" ng-show="!uploadProgressIndeterminate()">
+                                <span translate>upload-progress-label</span>: {{ uploadProgressPercent() }}%
+                            </div>
                         </div>
 
                         <div class="crop-submit-actions">

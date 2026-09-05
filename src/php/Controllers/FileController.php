@@ -79,7 +79,9 @@ class FileController
             'site' => $page->site,
             'title' => $page->title,
             'description' => $page->imageinfo->descriptionurl,
-            'pagecount' => $page->imageinfo->pagecount,
+            // Prefer a count verified against the actual file (some TIFFs
+            // report embedded preview/thumbnail IFDs as extra "pages").
+            'pagecount' => $page->file->getPageCount() ?: $page->imageinfo->pagecount,
             'mime' => $page->imageinfo->mime,
             'original' => $this->fileResponse($page->file, $original, $pageno),
             'thumb' => $this->fileResponse($page->file, $thumb, $pageno, '_thumb'),
@@ -255,6 +257,7 @@ class FileController
         $metadata = array_get($body, 'metadata', []);
         $ignoreWarnings = boolval(array_get($body, 'ignorewarnings', false));
         $newName = array_get($body, 'filename');
+        $progressFile = $this->uploadProgressFile(array_get($body, 'progress'));
 
         $page->assertExists();
         $cropPath = $page->file->getAbsolutePathForPage($pageno, '_cropped');
@@ -278,7 +281,13 @@ class FileController
             $page->assertCanOverwrite();
 
             // ignoreWarnings=true is necessary for overwrite
-            $uploadResponse = $page->upload($cropPath, $editComment, true);
+            try {
+                $uploadResponse = $page->upload($cropPath, $editComment, true, $progressFile);
+            } finally {
+                if ($progressFile) {
+                    @unlink($progressFile);
+                }
+            }
             $logger->info('Uploaded new version of "' . $page->title . '".');
 
             $editSummary = new EditSummary();
@@ -314,7 +323,13 @@ class FileController
             }
             $newPage->setWikitext($wikitext);
 
-            $uploadResponse = $newPage->upload($cropPath, $editComment, $ignoreWarnings);
+            try {
+                $uploadResponse = $newPage->upload($cropPath, $editComment, $ignoreWarnings, $progressFile);
+            } finally {
+                if ($progressFile) {
+                    @unlink($progressFile);
+                }
+            }
             $logger->info('Uploaded new version of "' . $page->title . '" as "' . $newPage->title . '".');
 
             $editSummary = new EditSummary();
@@ -349,6 +364,29 @@ class FileController
 
         $response->getBody()->write((string)json_encode($uploadResponse));
         return $response;
+    }
+
+    /**
+     * Path of the JSON status file that the frontend polls while the upload
+     * is running (see /api/upload-progress). Returns null when no (valid)
+     * progress token was supplied, i.e. the upload was not started from the
+     * web UI.
+     *
+     * @param mixed $token
+     * @return string|null
+     */
+    protected function uploadProgressFile($token)
+    {
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{16,64}$/', $token)) {
+            return null;
+        }
+
+        $dir = ROOT_PATH . '/public_html/files/progress';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return $dir . '/' . $token . '.json';
     }
 
     protected function selectedMetadataValues($metadata, $group, $valueKey)

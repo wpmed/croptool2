@@ -1870,3 +1870,38 @@ html .cropper-face {
   background-color: unset;
 }
 
+/* Upload progress bar (Codex ProgressBar style) */
+.ct-upload-progress {
+  margin: 1.2em 0 0.6em;
+}
+.ct-upload-progress-bar {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background-color: #eaecf0;
+  overflow: hidden;
+}
+.ct-upload-progress-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  background-color: #36c;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.ct-upload-progress-bar.indeterminate .ct-upload-progress-fill {
+  width: 30%;
+  animation: ct-upload-progress-slide 1.6s ease-in-out infinite;
+}
+@keyframes ct-upload-progress-slide {
+  0%   { transform: translateX(-110%); }
+  100% { transform: translateX(350%); }
+}
+.ct-upload-progress-label {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #54595d;
+}
+

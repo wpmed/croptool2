@@ -103,13 +103,43 @@ $basePath = rtrim($container->get(\CropTool\Config::class)->get('basepath'), '/'
 if ($basePath !== '') {
     $app->setBasePath($basePath);
 }
-$app->addErrorMiddleware(true, true, true);
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$errorMiddleware->setDefaultErrorHandler(function ($request, \Throwable $exception) use ($app) {
+    $response = new Response();
+    $response = $response->withStatus(500);
+    $response = $response->withHeader('Content-Type', 'application/json');
+    $message = $exception->getMessage();
+    $response->getBody()->write((string)json_encode([
+        'exception' => [['message' => $message]],
+        'error' => $message,
+    ]));
+    return $response;
+});
 $app->add(\CropTool\SessionInterface::class);
 $app->addBodyParsingMiddleware();
 
 $app->get('/api/ping', function ($request, $response) {
     $response->getBody()->write('pong');
     return $response->withStatus(200);
+});
+
+// Progress of a running chunked upload, polled by the web UI. No session
+// auth here on purpose: the publish request holds the PHP session lock, so a
+// poll that started a session would block until the upload finished.
+$app->get('/api/upload-progress', function ($request, $response) {
+    $token = $request->getQueryParams()['token'] ?? '';
+    $body = ['uploaded' => 0, 'filesize' => 0];
+    if (preg_match('/^[a-f0-9]{16,64}$/', $token)) {
+        $file = ROOT_PATH . '/public_html/files/progress/' . $token . '.json';
+        if (file_exists($file)) {
+            $decoded = json_decode((string)file_get_contents($file), true);
+            if (is_array($decoded)) {
+                $body = array_merge($body, $decoded);
+            }
+        }
+    }
+    $response->getBody()->write((string)json_encode($body));
+    return $response;
 });
 
 $app->get('/api/server-cleanup', function ($request, $response) {

@@ -333,7 +333,7 @@ directive('ctComparePreview', [function() {
     };
 }]).
 
-controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpParamSerializer', '$translate', 'LoginService', 'localStorageService', 'WindowService', function($scope, $http, $timeout, $q, $window, $httpParamSerializer, $translate, LoginService, LocalStorageService, WindowService) {
+controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$window', '$httpParamSerializer', '$translate', 'LoginService', 'localStorageService', 'WindowService', function($scope, $http, $timeout, $interval, $q, $window, $httpParamSerializer, $translate, LoginService, LocalStorageService, WindowService) {
 
     var everPushedSomething = false,
         pixelratio = [1,1],
@@ -1423,6 +1423,55 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
     };
 
+    function makeId() {
+        var bytes = new Uint8Array(20),
+            hex = '',
+            i;
+        if (window.crypto && window.crypto.getRandomValues) {
+            window.crypto.getRandomValues(bytes);
+        } else {
+            for (i = 0; i < bytes.length; i++) {
+                bytes[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        for (i = 0; i < bytes.length; i++) {
+            hex += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
+        }
+        return hex;
+    }
+
+    function stopUploadProgressPoll() {
+        if ($scope.uploadProgressTimer) {
+            $interval.cancel($scope.uploadProgressTimer);
+            $scope.uploadProgressTimer = null;
+        }
+    }
+
+    function startUploadProgressPoll(token) {
+        stopUploadProgressPoll();
+        $scope.uploadProgress = { uploaded: 0, filesize: 0 };
+        $scope.uploadProgressTimer = $interval(function() {
+            $http.get('./api/upload-progress', { params: { token: token } }).then(function(res) {
+                var p = res.data || {};
+                $scope.uploadProgress.uploaded = Number(p.uploaded) || 0;
+                $scope.uploadProgress.filesize = Number(p.filesize) || 0;
+            });
+        }, 600);
+    }
+
+    $scope.uploadProgressPercent = function() {
+        var p = $scope.uploadProgress;
+        if (!p || !p.filesize) {
+            return 0;
+        }
+        return Math.max(0, Math.min(100, Math.round(p.uploaded / p.filesize * 100)));
+    };
+
+    $scope.uploadProgressIndeterminate = function() {
+        var p = $scope.uploadProgress;
+        return !p || !p.filesize;
+    };
+
     $scope.upload = function(isRetrying) {
 
         if ($scope.uploadBlockedByFilenameConflict()) {
@@ -1434,6 +1483,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.error = '';
         $scope.allowIgnoreWarnings = false;
 
+        var progressToken = makeId();
+        startUploadProgressPoll(progressToken);
+
         var params = {
             title: $scope.currentUrlParams.title,
             site: $scope.currentUrlParams.site,
@@ -1443,7 +1495,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             filename: $scope.newTitle,
             elems: $scope.cropresults.page.elems,
             metadata: $scope.cropresults.page.metadata,
-            store: true
+            store: true,
+            progress: progressToken
         };
         if ($scope.overwrite == 'rename') {
             params.metadata = $scope.cropresults.page.metadata;
@@ -1459,6 +1512,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
             // console.log(response);
 
+            stopUploadProgressPoll();
             $scope.ladda2 = false;
             if (response.result === 'Success') {
                 $scope.uploadresults = response; //.imageinfo.descriptionurl;
@@ -1492,6 +1546,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             }
 
         }, function(res) {
+            stopUploadProgressPoll();
             $scope.ladda2 = false;
             $scope.error = 'Upload failed! ' + responseError(res.data);
         });
