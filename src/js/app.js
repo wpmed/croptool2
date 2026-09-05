@@ -1402,7 +1402,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
                     $scope.currentUrlParams.title;
                 $scope.uploadResultUrl = response.imageinfo && response.imageinfo.descriptionurl ?
                     response.imageinfo.descriptionurl :
-                    '//' + $scope.currentUrlParams.site + '/wiki/File:' + encodeURIComponent($scope.uploadResultFileName);
+                    'https://' + $scope.currentUrlParams.site + '/wiki/File:' + encodeURIComponent($scope.uploadResultFileName.replace(/ /g, '_'));
                 $scope.uploadResultCopied = '';
 
             } else if (response.result == 'Warning') {

@@ -269,37 +269,48 @@ class ApiService
     }
 
     /**
-     * Make sure a successful upload result carries imageinfo.descriptionurl
-     * (needed by the "copy the URL" field in the UI). Some chunked-upload
-     * responses omit imageinfo entirely; fill it in from a follow-up request.
+     * A successful upload must carry imageinfo.descriptionurl (needed by the
+     * "copy the URL" field in the UI and as proof that the file page was
+     * actually created). The chunked stash-assembly answer has no real
+     * descriptionurl, and a "Success" that cannot be confirmed against the
+     * wiki means the file was not published - fail instead of pretending.
      *
      * @param \stdClass $upload
      * @return \stdClass
      */
     protected function completeUploadResult($upload)
     {
-        if ($upload->result !== 'Success' || !empty($upload->imageinfo->descriptionurl)) {
+        if ($upload->result !== 'Success') {
             return $upload;
         }
-        if (empty($upload->filename)) {
+        if (!empty($upload->imageinfo->descriptionurl)) {
             return $upload;
         }
 
-        $data = $this->request([
-            'action' => 'query',
-            'prop' => 'imageinfo',
-            'iiprop' => 'url',
-            'titles' => 'File:' . $upload->filename,
-        ]);
+        // A normal upload reports the page URL directly. If it is missing,
+        // ask the wiki about the file before giving up.
+        $filename = $upload->filename ?? '';
+        if ($filename !== '') {
+            $data = $this->request([
+                'action' => 'query',
+                'prop' => 'imageinfo',
+                'iiprop' => 'url',
+                'titles' => 'File:' . $filename,
+            ]);
 
-        foreach ((array)($data->query->pages ?? []) as $page) {
-            if (!empty($page->imageinfo[0])) {
-                $upload->imageinfo = $page->imageinfo[0];
-                break;
+            foreach ((array)($data->query->pages ?? []) as $page) {
+                if (!empty($page->imageinfo[0]->descriptionurl)) {
+                    $upload->imageinfo = $page->imageinfo[0];
+                    return $upload;
+                }
             }
         }
 
-        return $upload;
+        throw new ApiError(
+            'The upload was reported as successful, but no file page could be confirmed on ' .
+            $this->site . ' ("' . ($filename ?: 'unknown filename') . '"). ' .
+            'The file was probably not published; please check and try again.'
+        );
     }
 
     protected function writeUploadProgress($progressFile, $uploaded, $fileSize)
