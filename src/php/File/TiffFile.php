@@ -33,7 +33,7 @@ class TiffFile extends File implements FileInterface
         }
 
         // Extract page as tiff
-        Command::exec('convert {src} {dest}', [
+        Command::exec($this->pathToConvert . ' {src} {dest}', [
             'src' => $sourceFile . '[' . ($pageno - 1) . ']',
             'dest' => $destFile,
         ]);

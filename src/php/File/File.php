@@ -21,6 +21,7 @@ class File implements FileInterface
     protected $pathToJpegTran;
     protected $pathToDdjvu;
     protected $pathToGs;
+    protected $pathToConvert;
 
 
     protected $supportedMimeTypes = [
@@ -42,6 +43,7 @@ class File implements FileInterface
         $this->pathToJpegTran = $config->get('jpegtranPath');
         $this->pathToDdjvu = $config->get('ddjvuPath');
         $this->pathToGs = $config->get('gsPath');
+        $this->pathToConvert = $config->get('convertPath', 'convert');
 
         $this->fileExt = $this->getFileExt($this->mime);
     }
@@ -98,17 +100,34 @@ class File implements FileInterface
 
     public function fetch()
     {
-        if ($this->exists()) {
+        $path = $this->getAbsolutePath();
+
+        // Check the file we actually download into (no page suffix).
+        // $this->exists() is not suitable here: page-aware subclasses
+        // (e.g. TiffFile) append a ".pageN" suffix even for page 0, which
+        // would make us re-download the original on every request.
+        if (file_exists($path)) {
             return;
         }
 
-        $path = $this->getAbsolutePath();
+        // Downloading a large original (e.g. a 400+ MB TIFF scan) takes longer
+        // than PHP's per-request execution limit, and the conversion that
+        // follows adds more. Lift the limit for the rest of this request.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(0);
+        }
 
         // Init
         $contentLength = -1;
         $fp = fopen($path, 'w');
         $ch = curl_init($this->url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);  // seconds
+
+        // Do not cap the total transfer time: a fixed cap aborts any download
+        // larger than what the current link can move within it. Instead bound
+        // the connection setup and abort only when the transfer stalls.
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_LOW_SPEED_LIMIT, 1);   // 1 byte/sec...
+        curl_setopt($ch, CURLOPT_LOW_SPEED_TIME, 60);   // ...for a full minute = dead peer
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
@@ -134,7 +153,8 @@ class File implements FileInterface
         );
 
         // Download file
-        curl_exec($ch);
+        $ok = curl_exec($ch);
+        $curlError = $ok === false ? curl_error($ch) : null;
 
         // Tidy up
         curl_close($ch);
@@ -149,8 +169,9 @@ class File implements FileInterface
                 // Remove the partial download
                 unlink($path);
             }
+            $why = $curlError ? ' (' . $curlError . ')' : '';
             throw new \RuntimeException(
-                "Received only $fsize of $contentLength bytes from {$this->url} before the server closed the connection. " .
+                "Received only $fsize of $contentLength bytes from {$this->url}$why. " .
                 "Please retry in a moment."
             );
         }
