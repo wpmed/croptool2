@@ -1519,9 +1519,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
                 $scope.uploadResultFileName = $scope.overwrite == 'rename' ?
                     $scope.newTitle :
                     $scope.currentUrlParams.title;
-                $scope.uploadResultUrl = response.imageinfo && response.imageinfo.descriptionurl ?
-                    response.imageinfo.descriptionurl :
-                    'https://' + $scope.currentUrlParams.site + '/wiki/File:' + encodeURIComponent($scope.uploadResultFileName.replace(/ /g, '_'));
+                $scope.uploadResultUrl = response.imageinfo.descriptionurl;
                 $scope.uploadResultCopied = '';
 
             } else if (response.result == 'Warning') {
