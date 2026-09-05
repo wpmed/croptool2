@@ -314,13 +314,20 @@ class ApiService
     }
 
     /**
-     * Chunked upload (action=upload with chunk+offset+filesize). MediaWiki
-     * does not accept very large files in a single POST, so send the file in
-     * 5 MiB chunks.
+     * Chunked upload. MediaWiki does not accept very large files in a single
+     * POST, so send the file in 5 MiB chunks (action=upload with chunk+
+     * offset+filesize+filekey).
+     *
+     * Note: chunk requests only store the file in an upload stash. When the
+     * last chunk is received MediaWiki assembles the stash and answers
+     * "Success" with the assembled filekey, but it does NOT create the file
+     * page. The final step is a separate action=upload request that has no
+     * chunk and only references the filekey, which publishes the file.
      *
      * @param array $args Base upload arguments (no file/chunk yet).
      * @param string $filename
      * @param int $fileSize
+     * @param string|null $progressFile
      * @return array
      */
     protected function uploadInChunks(array $args, $filename, $fileSize, $progressFile=null)
@@ -364,32 +371,41 @@ class ApiService
                 @unlink($tmpFile);
                 $tmpFile = null;
 
-                if ($response->result !== 'Continue') {
-                    // Final chunk: 'Success', or a 'Warning' for the caller to handle.
-                    return $response;
+                if ($response->result === 'Continue') {
+                    if ($filekey === null && isset($response->filekey)) {
+                        $filekey = $response->filekey;
+                    }
+                    $nextOffset = isset($response->offset)
+                        ? intval($response->offset)
+                        : $offset + $chunkLength;
+                    if ($nextOffset <= $offset) {
+                        throw new ApiError('Upload did not make progress (stuck at offset ' . $offset . ').');
+                    }
+                    $offset = $nextOffset;
+                    $this->writeUploadProgress($progressFile, $offset, $fileSize);
+                    continue;
                 }
 
-                if ($filekey === null && isset($response->filekey)) {
-                    $filekey = $response->filekey;
+                if ($response->result === 'Success') {
+                    // All chunks are assembled in the upload stash. Remember
+                    // the assembled filekey and publish it below.
+                    if (isset($response->filekey)) {
+                        $filekey = $response->filekey;
+                    }
+                    break;
                 }
-                $nextOffset = isset($response->offset)
-                    ? intval($response->offset)
-                    : $offset + $chunkLength;
-                if ($nextOffset <= $offset) {
-                    throw new ApiError('Upload did not make progress (stuck at offset ' . $offset . ').');
-                }
-                $offset = $nextOffset;
-                $this->writeUploadProgress($progressFile, $offset, $fileSize);
+
+                // 'Warning' or anything else: hand back to the caller, which
+                // knows how to ask the user about warnings.
+                return $response;
             }
 
             if ($filekey === null) {
                 throw new ApiError('The upload server did not provide a filekey.');
             }
 
-            // All bytes were sent but the server still answered "Continue"
-            // (this can happen when the file size is an exact multiple of the
-            // chunk size). Finish the stashed upload with a final request that
-            // references the filekey instead of a chunk.
+            // Publish: create the file page and revision from the assembled
+            // stash. This is the request whose result the caller sees.
             $finalArgs = $args;
             $finalArgs['filekey'] = $filekey;
             $response = $this->request($finalArgs, true)->upload;
