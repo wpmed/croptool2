@@ -79,7 +79,9 @@ class FileController
             'site' => $page->site,
             'title' => $page->title,
             'description' => $page->imageinfo->descriptionurl,
-            'pagecount' => $page->imageinfo->pagecount,
+            // Prefer a count verified against the actual file (some TIFFs
+            // report embedded preview/thumbnail IFDs as extra "pages").
+            'pagecount' => $page->file->getPageCount() ?: $page->imageinfo->pagecount,
             'mime' => $page->imageinfo->mime,
             'original' => $this->fileResponse($page->file, $original, $pageno),
             'thumb' => $this->fileResponse($page->file, $thumb, $pageno, '_thumb'),

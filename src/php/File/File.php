@@ -197,6 +197,15 @@ class File implements FileInterface
         return $this->getAbsolutePathForPage($pageno);
     }
 
+    /**
+     * Page count verified from the local file, or null to keep the count
+     * reported by MediaWiki. Only page-aware subclasses override this.
+     */
+    public function getPageCount()
+    {
+        return null;
+    }
+
     static public function readMetadata($path) {
         $sz = getimagesize($path);
 

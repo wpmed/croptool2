@@ -269,7 +269,7 @@ window.CropToolAssetVersion = 'dev';
                         <span translate translate-value-width="{{cropresults.crop.width}}" translate-value-height="{{cropresults.crop.height}}">crop-dimensions</span>
                     </span>
 
-                    <span ng-show="currentUrlParams.page">
+                    <span ng-show="currentUrlParams.page && !cropresults && !uploadresults">
                         <span translate>page</span>:
                         <select ng-model="currentUrlParams.page"
                                 ng-options="option for option in availablePages track by option"
