@@ -32,8 +32,11 @@ class TiffFile extends File implements FileInterface
             return $destFile;
         }
 
-        // Extract page as tiff
-        Command::exec($this->pathToConvert . ' {src} {dest}', [
+        // Extract page as tiff. -auto-orient physically applies any EXIF
+        // orientation tag (the same rotation MediaWiki applies when rendering
+        // the file), so the page pixels are stored upright and CropTool's
+        // orientation-unaware TIFF path shows and crops them correctly.
+        Command::exec($this->pathToConvert . ' {src} -auto-orient {dest}', [
             'src' => $sourceFile . '[' . ($pageno - 1) . ']',
             'dest' => $destFile,
         ]);
