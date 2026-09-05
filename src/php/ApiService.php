@@ -228,9 +228,12 @@ class ApiService
      * @param string $summary
      * @param string|null $text
      * @param bool $ignoreWarnings
+     * @param string|null $progressFile Path of a JSON status file that is
+     *   updated with {"uploaded":..,"filesize":..} after every chunk, used by
+     *   the frontend to render an upload progress bar.
      * @return array
      */
-    public function upload($title, $filename, $summary, $text=null, $ignoreWarnings=false)
+    public function upload($title, $filename, $summary, $text=null, $ignoreWarnings=false, $progressFile=null)
     {
         // Large files (e.g. TIFF crops) can take many minutes to upload; do
         // not let max_execution_time silently kill the request half-way.
@@ -254,12 +257,60 @@ class ApiService
 
         $fileSize = @filesize($filename);
 
+        $upload = null;
         if ($fileSize === false || $fileSize <= self::SINGLE_UPLOAD_LIMIT) {
             $args['file'] = new \CURLFile($filename);
-            return $this->request($args, true)->upload;
+            $upload = $this->request($args, true)->upload;
+        } else {
+            $upload = $this->uploadInChunks($args, $filename, $fileSize, $progressFile);
         }
 
-        return $this->uploadInChunks($args, $filename, $fileSize);
+        return $this->completeUploadResult($upload);
+    }
+
+    /**
+     * Make sure a successful upload result carries imageinfo.descriptionurl
+     * (needed by the "copy the URL" field in the UI). Some chunked-upload
+     * responses omit imageinfo entirely; fill it in from a follow-up request.
+     *
+     * @param \stdClass $upload
+     * @return \stdClass
+     */
+    protected function completeUploadResult($upload)
+    {
+        if ($upload->result !== 'Success' || !empty($upload->imageinfo->descriptionurl)) {
+            return $upload;
+        }
+        if (empty($upload->filename)) {
+            return $upload;
+        }
+
+        $data = $this->request([
+            'action' => 'query',
+            'prop' => 'imageinfo',
+            'iiprop' => 'url',
+            'titles' => 'File:' . $upload->filename,
+        ]);
+
+        foreach ((array)($data->query->pages ?? []) as $page) {
+            if (!empty($page->imageinfo[0])) {
+                $upload->imageinfo = $page->imageinfo[0];
+                break;
+            }
+        }
+
+        return $upload;
+    }
+
+    protected function writeUploadProgress($progressFile, $uploaded, $fileSize)
+    {
+        if (!$progressFile) {
+            return;
+        }
+        @file_put_contents(
+            $progressFile,
+            (string)json_encode(['uploaded' => (int)$uploaded, 'filesize' => (int)$fileSize])
+        );
     }
 
     /**
@@ -272,8 +323,10 @@ class ApiService
      * @param int $fileSize
      * @return array
      */
-    protected function uploadInChunks(array $args, $filename, $fileSize)
+    protected function uploadInChunks(array $args, $filename, $fileSize, $progressFile=null)
     {
+        $this->writeUploadProgress($progressFile, 0, $fileSize);
+
         $handle = fopen($filename, 'rb');
         if ($handle === false) {
             throw new ApiError('Unable to read the file to upload: ' . $filename);
@@ -326,6 +379,7 @@ class ApiService
                     throw new ApiError('Upload did not make progress (stuck at offset ' . $offset . ').');
                 }
                 $offset = $nextOffset;
+                $this->writeUploadProgress($progressFile, $offset, $fileSize);
             }
 
             if ($filekey === null) {
