@@ -152,19 +152,19 @@ directive('ctCropper', ['$timeout', function($timeout) {
 
             function initCropper() {
                 destroyCropper();
-                // SVG files might not contain an explicit width/height in
-                // which case the size of the browsers viewport is used.
-                // Enforce that we always use the server's calculation for image width/height.
-                Object.defineProperty(
-                        element[0],
-                        'naturalWidth',
-                        { value: element[0].getAttribute( 'width' ) }
-                );
-                Object.defineProperty(
-                        element[0],
-                        'naturalHeight',
-                        { value: element[0].getAttribute( 'height' ) }
-                );
+                // The browser computes the intrinsic size of an SVG that has no
+                // explicit width/height (e.g. a viewBox-only SVG) as 150px tall
+                // (Chrome), which can differ from the server-reported size
+                // (MediaWiki defaults such SVGs to 512px). Report the browser's
+                // size so the controller can scale Cropper.js coordinates to the
+                // server's coordinate space. Note: this cannot be done by
+                // overriding naturalWidth/naturalHeight here, because
+                // Cropper.js 1.6.x reads those from a clone of the image, not
+                // from this element.
+                scope.$emit('cropbox-natural-size', {
+                    width: element[0].naturalWidth,
+                    height: element[0].naturalHeight
+                });
                 scope.cropper = new Cropper(element[0], {
                     aspectRatio: scope.aspectRatio,
                     crop: cropperCrop,
@@ -344,10 +344,27 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
 
     $scope.availableLanguages = [
         { code: 'en', label: 'English' },
-        { code: 'nl', label: 'Nederlands' },
-        { code: 'fr', label: 'Francais' },
+        { code: 'az', label: 'Azərbaycanca' },
+        { code: 'da', label: 'Dansk' },
         { code: 'de', label: 'Deutsch' },
-        { code: 'es', label: 'Espanol' },
+        { code: 'es', label: 'Español' },
+        { code: 'fa', label: 'فارسی' },
+        { code: 'fr', label: 'Français' },
+        { code: 'ga', label: 'Gaeilge' },
+        { code: 'gl', label: 'Galego' },
+        { code: 'ko', label: '한국어' },
+        { code: 'lb', label: 'Lëtzebuergesch' },
+        { code: 'mk', label: 'Македонски' },
+        { code: 'ms', label: 'Bahasa Melayu' },
+        { code: 'nl', label: 'Nederlands' },
+        { code: 'pms', label: 'Piemontèis' },
+        { code: 'ps', label: 'پښتو' },
+        { code: 'ru', label: 'Русский' },
+        { code: 'sk', label: 'Slovenčina' },
+        { code: 'sv', label: 'Svenska' },
+        { code: 'tr', label: 'Türkçe' },
+        { code: 'zh-hans', label: '中文（简体）' },
+        { code: 'zh-hant', label: '中文（繁體）' },
         { code: 'zh', label: '中文' }
     ];
     var storedLanguage = LocalStorageService.get('croptool-language');
@@ -569,6 +586,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
             $scope.crop_dim.w > 0 && $scope.crop_dim.h > 0;
     }
 
+    $scope.clampCropDimensions = function() {
+        clampCropDimensions();
+    };
+
     function clampCropDimensions(current_coord, ratio) {
         if (!$scope.metadata || !$scope.metadata.original || !$scope.crop_dim) {
             return;
@@ -613,6 +634,16 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
         $scope.crop_dim.right = $scope.metadata.original.width - $scope.crop_dim.x - $scope.crop_dim.w;
         $scope.crop_dim.bottom = $scope.metadata.original.height - $scope.crop_dim.y - $scope.crop_dim.h;
     }
+
+    $scope.$on('cropbox-natural-size', function(event, size) {
+        if (!$scope.metadata || $scope.metadata.thumb) {
+            return;
+        }
+        var original = $scope.metadata.original;
+        if (size && size.width > 0 && size.height > 0 && original && original.width && original.height) {
+            pixelratio = [original.width / size.width, original.height / size.height];
+        }
+    });
 
     $scope.$on('loginStatusChanged', function() {
 
@@ -750,6 +781,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
             if ($scope.metadata.thumb) {
                 pixelratio = [$scope.metadata.original.width/$scope.metadata.thumb.width, $scope.metadata.original.height/$scope.metadata.thumb.height];
             } else {
+                // Files without a thumbnail (SVGs) are shown via the original
+                // image. The cropbox-natural-size event will set the correct
+                // pixelratio once the image has loaded.
                 pixelratio = [1,1];
             }
 
@@ -888,7 +922,15 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
             return null;
         }
 
-        return ($scope.cropresults.thumb ? $scope.cropresults.thumb.width : $scope.cropresults.crop.width);
+        if ($scope.cropresults.thumb) {
+            // Raster thumbnails are already capped at the thumbnail size (800px).
+            return $scope.cropresults.thumb.width;
+        }
+
+        // SVG crops (and small crops that don't get a thumbnail) are otherwise
+        // rendered at their own pixel size: tiny crops become invisible and huge
+        // crops overflow the layout. Bound the preview box to a sensible size.
+        return Math.min(Math.max($scope.cropresults.crop.width, 240), 800);
     };
 
     $scope.previewBoxStyle = function() {
@@ -943,6 +985,83 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
 
     $scope.straightenChanged = function() {
         updateRotationAngle();
+    };
+
+    // Accelerated stepper: held buttons go from slow to fast
+    var stepTimer = null, stepAccel = null;
+
+    function stepOnce(dimension, baseStep) {
+        if (!$scope.crop_dim || !Object.prototype.hasOwnProperty.call($scope.crop_dim, dimension)) {
+            return;
+        }
+        var value = parseInt($scope.crop_dim[dimension]);
+        var step = stepAccel ? baseStep * stepAccel : baseStep;
+        $scope.crop_dim[dimension] = (isNaN(value) ? 0 : value) + step;
+        $scope.onCropDimChange(dimension);
+    }
+
+    function stepAccelerate() {
+        stepAccel = (stepAccel || 1) + 2;
+    }
+
+    $scope.startCropStep = function(dimension, baseStep) {
+        stepAccel = null;
+        stepOnce(dimension, baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            stepOnce(dimension, baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.startTouchStep = function(dimension, baseStep, $event) {
+        $event.preventDefault();
+        // Single step on touch; no acceleration (too twitchy on mobile)
+        $scope.stepCropDimension(dimension, baseStep);
+    };
+
+    $scope.startTouchStraighten = function(baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepStraighten(baseStep);
+    };
+
+    $scope.startTouchFilter = function(filter, baseStep, $event) {
+        $event.preventDefault();
+        $scope.stepFilter(filter, baseStep);
+    };
+
+    $scope.startStraightenStep = function(baseStep) {
+        stepAccel = null;
+        $scope.stepStraighten(baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            $scope.stepStraighten(baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.startFilterStep = function(filter, baseStep) {
+        stepAccel = null;
+        $scope.stepFilter(filter, baseStep);
+        var timeout = 400;
+        stepTimer = setTimeout(function tick() {
+            stepAccelerate();
+            $scope.stepFilter(filter, baseStep);
+            timeout = Math.max(80, timeout - 40);
+            stepTimer = setTimeout(tick, timeout);
+        }, timeout);
+    };
+
+    $scope.stopStep = function() {
+        if (stepTimer) {
+            clearTimeout(stepTimer);
+            stepTimer = null;
+        }
+        stepAccel = null;
     };
 
     $scope.stepCropDimension = function(dimension, step) {

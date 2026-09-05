@@ -2,6 +2,7 @@
 	"@metadata": {
 		"authors": [
 			"1Veertje",
+			"McDutchie",
 			"Siebrand"
 		]
 	},
@@ -113,8 +114,8 @@
 	"results-copy-filename": "Bestandsnaam",
 	"results-copy-url": "Bestands-url",
 	"results-copy": "Kopiëren",
-	"results-copied": "Gekopiëerd",
-	"results-copy-success": "Naar klembord gekopiëerd.",
+	"results-copied": "Gekopieerd",
+	"results-copy-success": "Naar klembord gekopieerd.",
 	"results-success-wikidata": "De afbeelding is toegevoegd aan {{link}}. U kunt het item bekijken.",
 	"results-failure": "Uploaden van uitgesneden afbeelding mislukt: {{error}}"
 }

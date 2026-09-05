@@ -379,7 +379,7 @@ label {
     max-width: 100%;
     max-height: 48vh;
     max-height: min(48vh, 420px);
-    width: auto;
+    width: 100%;
     height: auto;
     object-fit: contain;
     box-shadow: 2px 2px 2px #ccc;
