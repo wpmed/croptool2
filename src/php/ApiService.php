@@ -281,6 +281,7 @@ class ApiService
 
         $tmpFile = null;
         $offset = 0;
+        $filekey = null;
 
         try {
             while ($offset < $fileSize) {
@@ -299,6 +300,11 @@ class ApiService
                 $chunkArgs['filesize'] = $fileSize;
                 $chunkArgs['offset'] = $offset;
                 $chunkArgs['chunk'] = new \CURLFile($tmpFile);
+                // MediaWiki requires the stash filekey from the first chunk on
+                // every request that has a non-zero offset.
+                if ($filekey !== null) {
+                    $chunkArgs['filekey'] = $filekey;
+                }
 
                 $response = $this->request($chunkArgs, true)->upload;
 
@@ -310,6 +316,9 @@ class ApiService
                     return $response;
                 }
 
+                if ($filekey === null && isset($response->filekey)) {
+                    $filekey = $response->filekey;
+                }
                 $nextOffset = isset($response->offset)
                     ? intval($response->offset)
                     : $offset + $chunkLength;
@@ -319,11 +328,16 @@ class ApiService
                 $offset = $nextOffset;
             }
 
-            // The server kept answering "Continue" right up to the end of the
-            // file: one final empty request triggers the completion.
+            if ($filekey === null) {
+                throw new ApiError('The upload server did not provide a filekey.');
+            }
+
+            // All bytes were sent but the server still answered "Continue"
+            // (this can happen when the file size is an exact multiple of the
+            // chunk size). Finish the stashed upload with a final request that
+            // references the filekey instead of a chunk.
             $finalArgs = $args;
-            $finalArgs['filesize'] = $fileSize;
-            $finalArgs['offset'] = $offset;
+            $finalArgs['filekey'] = $filekey;
             $response = $this->request($finalArgs, true)->upload;
             return $response;
         } catch (\Throwable $e) {
