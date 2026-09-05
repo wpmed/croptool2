@@ -205,4 +205,17 @@ class TiffFile extends File implements FileInterface
         fclose($fp);
         return $scenes;
     }
+
+    /**
+     * Write cropped TIFFs compressed. Source TIFFs are stored uncompressed,
+     * so without this a crop of a full-size scan is another multi-hundred-MB
+     * file that is slow and awkward to upload; ZIP/deflate is lossless.
+     */
+    static public function saveImage($im, $destPath, $srcPath)
+    {
+        if (strtolower(pathinfo($destPath, PATHINFO_EXTENSION)) === 'tiff') {
+            $im->setImageCompression(\Imagick::COMPRESSION_ZIP);
+        }
+        return $im->writeImage($destPath);
+    }
 }

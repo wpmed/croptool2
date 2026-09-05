@@ -103,7 +103,18 @@ $basePath = rtrim($container->get(\CropTool\Config::class)->get('basepath'), '/'
 if ($basePath !== '') {
     $app->setBasePath($basePath);
 }
-$app->addErrorMiddleware(true, true, true);
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$errorMiddleware->setDefaultErrorHandler(function ($request, \Throwable $exception) use ($app) {
+    $response = new Response();
+    $response = $response->withStatus(500);
+    $response = $response->withHeader('Content-Type', 'application/json');
+    $message = $exception->getMessage();
+    $response->getBody()->write((string)json_encode([
+        'exception' => [['message' => $message]],
+        'error' => $message,
+    ]));
+    return $response;
+});
 $app->add(\CropTool\SessionInterface::class);
 $app->addBodyParsingMiddleware();
 

@@ -216,6 +216,12 @@ class ApiService
     }
 
 
+    /** MediaWiki's default maximum chunk size is 5 MiB. */
+    const UPLOAD_CHUNK_SIZE = 5242880;
+
+    /** Files at or below this size use the simple single-request path. */
+    const SINGLE_UPLOAD_LIMIT = 8388608;
+
     /**
      * @param string $title
      * @param string $filename
@@ -226,6 +232,10 @@ class ApiService
      */
     public function upload($title, $filename, $summary, $text=null, $ignoreWarnings=false)
     {
+        // Large files (e.g. TIFF crops) can take many minutes to upload; do
+        // not let max_execution_time silently kill the request half-way.
+        set_time_limit(0);
+
         $token = $this->getEditToken();
 
         $args = [
@@ -234,7 +244,6 @@ class ApiService
             'filename' => $title,
             'token' => $token,
             'comment' => $summary,
-            'file' => new \CURLFile($filename),
         ];
         if ($ignoreWarnings) {
             $args['ignorewarnings'] = '1';
@@ -242,7 +251,89 @@ class ApiService
         if (!is_null($text)) {
             $args['text'] = $text;
         }
-        return $this->request($args, true)->upload;
+
+        $fileSize = @filesize($filename);
+
+        if ($fileSize === false || $fileSize <= self::SINGLE_UPLOAD_LIMIT) {
+            $args['file'] = new \CURLFile($filename);
+            return $this->request($args, true)->upload;
+        }
+
+        return $this->uploadInChunks($args, $filename, $fileSize);
+    }
+
+    /**
+     * Chunked upload (action=upload with chunk+offset+filesize). MediaWiki
+     * does not accept very large files in a single POST, so send the file in
+     * 5 MiB chunks.
+     *
+     * @param array $args Base upload arguments (no file/chunk yet).
+     * @param string $filename
+     * @param int $fileSize
+     * @return array
+     */
+    protected function uploadInChunks(array $args, $filename, $fileSize)
+    {
+        $handle = fopen($filename, 'rb');
+        if ($handle === false) {
+            throw new ApiError('Unable to read the file to upload: ' . $filename);
+        }
+
+        $tmpFile = null;
+        $offset = 0;
+
+        try {
+            while ($offset < $fileSize) {
+                $chunk = fread($handle, self::UPLOAD_CHUNK_SIZE);
+                $chunkLength = strlen($chunk);
+                if ($chunkLength === 0) {
+                    throw new ApiError('Could not read the file to upload at offset ' . $offset);
+                }
+
+                $tmpFile = tempnam(sys_get_temp_dir(), 'croptool');
+                if (file_put_contents($tmpFile, $chunk) === false) {
+                    throw new ApiError('Could not write an upload chunk to a temporary file.');
+                }
+
+                $chunkArgs = $args;
+                $chunkArgs['filesize'] = $fileSize;
+                $chunkArgs['offset'] = $offset;
+                $chunkArgs['chunk'] = new \CURLFile($tmpFile);
+
+                $response = $this->request($chunkArgs, true)->upload;
+
+                @unlink($tmpFile);
+                $tmpFile = null;
+
+                if ($response->result !== 'Continue') {
+                    // Final chunk: 'Success', or a 'Warning' for the caller to handle.
+                    return $response;
+                }
+
+                $nextOffset = isset($response->offset)
+                    ? intval($response->offset)
+                    : $offset + $chunkLength;
+                if ($nextOffset <= $offset) {
+                    throw new ApiError('Upload did not make progress (stuck at offset ' . $offset . ').');
+                }
+                $offset = $nextOffset;
+            }
+
+            // The server kept answering "Continue" right up to the end of the
+            // file: one final empty request triggers the completion.
+            $finalArgs = $args;
+            $finalArgs['filesize'] = $fileSize;
+            $finalArgs['offset'] = $offset;
+            $response = $this->request($finalArgs, true)->upload;
+            return $response;
+        } catch (\Throwable $e) {
+            if ($tmpFile !== null) {
+                @unlink($tmpFile);
+            }
+            throw $e;
+        } finally {
+            fclose($handle);
+        }
     }
 
     /**
