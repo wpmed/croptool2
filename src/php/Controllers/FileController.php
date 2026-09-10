@@ -65,6 +65,15 @@ class FileController
 
         $page->assertExists();
         $page->assertNotWaitingForLicenseReview();
+
+        // fetchPage() downloads the original and extracts the page. For very
+        // large files that takes a while, so report progress into a status
+        // file the frontend polls (see /api/download-progress).
+        $progressFile = $this->progressFile($request->getQueryParams()['progress'] ?? null);
+        if ($progressFile) {
+            @unlink($progressFile);
+            $page->file->setProgressFile($progressFile);
+        }
         $page->file->fetchPage($pageno);
 
         $thumbPath = $page->file->getAbsolutePathForPage($pageno, '_thumb');
@@ -79,7 +88,9 @@ class FileController
             'site' => $page->site,
             'title' => $page->title,
             'description' => $page->imageinfo->descriptionurl,
-            'pagecount' => $page->imageinfo->pagecount,
+            // Prefer a count verified against the actual file (some TIFFs
+            // report embedded preview/thumbnail IFDs as extra "pages").
+            'pagecount' => $page->file->getPageCount() ?: $page->imageinfo->pagecount,
             'mime' => $page->imageinfo->mime,
             'original' => $this->fileResponse($page->file, $original, $pageno),
             'thumb' => $this->fileResponse($page->file, $thumb, $pageno, '_thumb'),
@@ -90,6 +101,12 @@ class FileController
             'supportsFilters' => $page->file->supportsFilters(),
             'overrideResultExtension' => $page->file->overrideResultExtension()
         ]));
+
+        // The download status file is kept until now so the frontend can show
+        // 100% while the page is still being extracted/thumbnailed.
+        if ($progressFile) {
+            @unlink($progressFile);
+        }
 
         return $response;
     }
@@ -151,10 +168,27 @@ class FileController
         $crop = $original->crop($destPath, $cropMethod, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation);
         $thumb = $crop->thumb($thumbPath);
 
+        // A TIFF whose original carried an embedded preview/thumbnail subfile
+        // keeps one in the crop (downscaled to the same resolution tier), so
+        // MediaWiki can keep rendering thumbnails from the subfile instead of
+        // decoding a still-huge main scan.
+        if ($page->file instanceof \CropTool\File\TiffFile) {
+            $page->file->embedThumbnailIntoCrop($destPath);
+        }
+
         $logger->info('[{sha1}] Cropped using {method} mode', [
             'sha1' => $page->file->getShortSha1(),
             'method' => $cropMethod,
         ]);
+
+        // Real (IFD-verified) page count. It ignores embedded
+        // thumbnail/preview subfiles, so a TIFF whose only "extra page" is a
+        // scanner preview reports 1 here; the frontend uses this to decide
+        // whether overwriting the original with the crop is allowed.
+        $realPageCount = $page->file->getPageCount();
+        if (!$realPageCount) {
+            $realPageCount = $page->imageinfo->pagecount;
+        }
 
         $dim = array();
         if ( $pageno > 0 ) {
@@ -206,6 +240,7 @@ class FileController
             'site' => $page->site,
             'title' => $page->title,
             'pageno' => $pageno,
+            'realPagecount' => $realPageCount,
             'method' => $cropMethod,
             'dim' => implode(', ', $dim) . ' using [[Commons:CropTool|CropTool2]] with ' . $cropMethod . ' mode.',
             'page' => [
@@ -255,6 +290,7 @@ class FileController
         $metadata = array_get($body, 'metadata', []);
         $ignoreWarnings = boolval(array_get($body, 'ignorewarnings', false));
         $newName = array_get($body, 'filename');
+        $progressFile = $this->progressFile(array_get($body, 'progress'));
 
         $page->assertExists();
         $cropPath = $page->file->getAbsolutePathForPage($pageno, '_cropped');
@@ -278,7 +314,13 @@ class FileController
             $page->assertCanOverwrite();
 
             // ignoreWarnings=true is necessary for overwrite
-            $uploadResponse = $page->upload($cropPath, $editComment, true);
+            try {
+                $uploadResponse = $page->upload($cropPath, $editComment, true, $progressFile);
+            } finally {
+                if ($progressFile) {
+                    @unlink($progressFile);
+                }
+            }
             $logger->info('Uploaded new version of "' . $page->title . '".');
 
             $editSummary = new EditSummary();
@@ -314,7 +356,13 @@ class FileController
             }
             $newPage->setWikitext($wikitext);
 
-            $uploadResponse = $newPage->upload($cropPath, $editComment, $ignoreWarnings);
+            try {
+                $uploadResponse = $newPage->upload($cropPath, $editComment, $ignoreWarnings, $progressFile);
+            } finally {
+                if ($progressFile) {
+                    @unlink($progressFile);
+                }
+            }
             $logger->info('Uploaded new version of "' . $page->title . '" as "' . $newPage->title . '".');
 
             $editSummary = new EditSummary();
@@ -349,6 +397,30 @@ class FileController
 
         $response->getBody()->write((string)json_encode($uploadResponse));
         return $response;
+    }
+
+    /**
+     * Path of the JSON status file that the frontend polls while a large
+     * original is downloaded (see /api/download-progress) or an upload is
+     * running (see /api/upload-progress). Returns null when no (valid)
+     * progress token was supplied, i.e. the request was not started from the
+     * web UI.
+     *
+     * @param mixed $token
+     * @return string|null
+     */
+    protected function progressFile($token)
+    {
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{16,64}$/', $token)) {
+            return null;
+        }
+
+        $dir = ROOT_PATH . '/public_html/files/progress';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return $dir . '/' . $token . '.json';
     }
 
     protected function selectedMetadataValues($metadata, $group, $valueKey)

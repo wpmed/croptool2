@@ -58,14 +58,15 @@ class WikiPage
         $this->dirty = false;
     }
 
-    public function upload($filename, $editComment, $ignoreWarnings = false)
+    public function upload($filename, $editComment, $ignoreWarnings = false, $progressFile = null)
     {
         $response = $this->api->upload(
             $this->title,
             $filename,
             $editComment,
             strval($this->wikitext),
-            $ignoreWarnings
+            $ignoreWarnings,
+            $progressFile
         );
         $this->dirty = false;
         return $response;

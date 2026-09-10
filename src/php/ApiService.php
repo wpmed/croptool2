@@ -216,16 +216,29 @@ class ApiService
     }
 
 
+    /** MediaWiki's default maximum chunk size is 5 MiB. */
+    const UPLOAD_CHUNK_SIZE = 5242880;
+
+    /** Files at or below this size use the simple single-request path. */
+    const SINGLE_UPLOAD_LIMIT = 8388608;
+
     /**
      * @param string $title
      * @param string $filename
      * @param string $summary
      * @param string|null $text
      * @param bool $ignoreWarnings
+     * @param string|null $progressFile Path of a JSON status file that is
+     *   updated with {"uploaded":..,"filesize":..} after every chunk, used by
+     *   the frontend to render an upload progress bar.
      * @return array
      */
-    public function upload($title, $filename, $summary, $text=null, $ignoreWarnings=false)
+    public function upload($title, $filename, $summary, $text=null, $ignoreWarnings=false, $progressFile=null)
     {
+        // Large files (e.g. TIFF crops) can take many minutes to upload; do
+        // not let max_execution_time silently kill the request half-way.
+        set_time_limit(0);
+
         $token = $this->getEditToken();
 
         $args = [
@@ -234,7 +247,6 @@ class ApiService
             'filename' => $title,
             'token' => $token,
             'comment' => $summary,
-            'file' => new \CURLFile($filename),
         ];
         if ($ignoreWarnings) {
             $args['ignorewarnings'] = '1';
@@ -242,7 +254,181 @@ class ApiService
         if (!is_null($text)) {
             $args['text'] = $text;
         }
-        return $this->request($args, true)->upload;
+
+        $fileSize = @filesize($filename);
+
+        $upload = null;
+        if ($fileSize === false || $fileSize <= self::SINGLE_UPLOAD_LIMIT) {
+            $args['file'] = new \CURLFile($filename);
+            $upload = $this->request($args, true)->upload;
+        } else {
+            $upload = $this->uploadInChunks($args, $filename, $fileSize, $progressFile);
+        }
+
+        return $this->completeUploadResult($upload);
+    }
+
+    /**
+     * A successful upload must carry imageinfo.descriptionurl (needed by the
+     * "copy the URL" field in the UI and as proof that the file page was
+     * actually created). The chunked stash-assembly answer has no real
+     * descriptionurl, and a "Success" that cannot be confirmed against the
+     * wiki means the file was not published - fail instead of pretending.
+     *
+     * @param \stdClass $upload
+     * @return \stdClass
+     */
+    protected function completeUploadResult($upload)
+    {
+        if ($upload->result !== 'Success') {
+            return $upload;
+        }
+        if (!empty($upload->imageinfo->descriptionurl)) {
+            return $upload;
+        }
+
+        // A normal upload reports the page URL directly. If it is missing,
+        // ask the wiki about the file before giving up.
+        $filename = $upload->filename ?? '';
+        if ($filename !== '') {
+            $data = $this->request([
+                'action' => 'query',
+                'prop' => 'imageinfo',
+                'iiprop' => 'url',
+                'titles' => 'File:' . $filename,
+            ]);
+
+            foreach ((array)($data->query->pages ?? []) as $page) {
+                if (!empty($page->imageinfo[0]->descriptionurl)) {
+                    $upload->imageinfo = $page->imageinfo[0];
+                    return $upload;
+                }
+            }
+        }
+
+        throw new ApiError(
+            'The upload was reported as successful, but no file page could be confirmed on ' .
+            $this->site . ' ("' . ($filename ?: 'unknown filename') . '"). ' .
+            'The file was probably not published; please check and try again.'
+        );
+    }
+
+    protected function writeUploadProgress($progressFile, $uploaded, $fileSize)
+    {
+        if (!$progressFile) {
+            return;
+        }
+        @file_put_contents(
+            $progressFile,
+            (string)json_encode(['uploaded' => (int)$uploaded, 'filesize' => (int)$fileSize])
+        );
+    }
+
+    /**
+     * Chunked upload. MediaWiki does not accept very large files in a single
+     * POST, so send the file in 5 MiB chunks (action=upload with chunk+
+     * offset+filesize+filekey).
+     *
+     * Note: chunk requests only store the file in an upload stash. When the
+     * last chunk is received MediaWiki assembles the stash and answers
+     * "Success" with the assembled filekey, but it does NOT create the file
+     * page. The final step is a separate action=upload request that has no
+     * chunk and only references the filekey, which publishes the file.
+     *
+     * @param array $args Base upload arguments (no file/chunk yet).
+     * @param string $filename
+     * @param int $fileSize
+     * @param string|null $progressFile
+     * @return array
+     */
+    protected function uploadInChunks(array $args, $filename, $fileSize, $progressFile=null)
+    {
+        $this->writeUploadProgress($progressFile, 0, $fileSize);
+
+        $handle = fopen($filename, 'rb');
+        if ($handle === false) {
+            throw new ApiError('Unable to read the file to upload: ' . $filename);
+        }
+
+        $tmpFile = null;
+        $offset = 0;
+        $filekey = null;
+
+        try {
+            while ($offset < $fileSize) {
+                $chunk = fread($handle, self::UPLOAD_CHUNK_SIZE);
+                $chunkLength = strlen($chunk);
+                if ($chunkLength === 0) {
+                    throw new ApiError('Could not read the file to upload at offset ' . $offset);
+                }
+
+                $tmpFile = tempnam(sys_get_temp_dir(), 'croptool');
+                if (file_put_contents($tmpFile, $chunk) === false) {
+                    throw new ApiError('Could not write an upload chunk to a temporary file.');
+                }
+
+                $chunkArgs = $args;
+                $chunkArgs['filesize'] = $fileSize;
+                $chunkArgs['offset'] = $offset;
+                $chunkArgs['chunk'] = new \CURLFile($tmpFile);
+                // MediaWiki requires the stash filekey from the first chunk on
+                // every request that has a non-zero offset.
+                if ($filekey !== null) {
+                    $chunkArgs['filekey'] = $filekey;
+                }
+
+                $response = $this->request($chunkArgs, true)->upload;
+
+                @unlink($tmpFile);
+                $tmpFile = null;
+
+                if ($response->result === 'Continue') {
+                    if ($filekey === null && isset($response->filekey)) {
+                        $filekey = $response->filekey;
+                    }
+                    $nextOffset = isset($response->offset)
+                        ? intval($response->offset)
+                        : $offset + $chunkLength;
+                    if ($nextOffset <= $offset) {
+                        throw new ApiError('Upload did not make progress (stuck at offset ' . $offset . ').');
+                    }
+                    $offset = $nextOffset;
+                    $this->writeUploadProgress($progressFile, $offset, $fileSize);
+                    continue;
+                }
+
+                if ($response->result === 'Success') {
+                    // All chunks are assembled in the upload stash. Remember
+                    // the assembled filekey and publish it below.
+                    if (isset($response->filekey)) {
+                        $filekey = $response->filekey;
+                    }
+                    break;
+                }
+
+                // 'Warning' or anything else: hand back to the caller, which
+                // knows how to ask the user about warnings.
+                return $response;
+            }
+
+            if ($filekey === null) {
+                throw new ApiError('The upload server did not provide a filekey.');
+            }
+
+            // Publish: create the file page and revision from the assembled
+            // stash. This is the request whose result the caller sees.
+            $finalArgs = $args;
+            $finalArgs['filekey'] = $filekey;
+            $response = $this->request($finalArgs, true)->upload;
+            return $response;
+        } catch (\Throwable $e) {
+            if ($tmpFile !== null) {
+                @unlink($tmpFile);
+            }
+            throw $e;
+        } finally {
+            fclose($handle);
+        }
     }
 
     /**

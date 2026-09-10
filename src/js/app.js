@@ -333,7 +333,7 @@ directive('ctComparePreview', [function() {
     };
 }]).
 
-controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpParamSerializer', '$translate', 'LoginService', 'localStorageService', 'WindowService', function($scope, $http, $timeout, $q, $window, $httpParamSerializer, $translate, LoginService, LocalStorageService, WindowService) {
+controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$window', '$httpParamSerializer', '$translate', 'LoginService', 'localStorageService', 'WindowService', function($scope, $http, $timeout, $interval, $q, $window, $httpParamSerializer, $translate, LoginService, LocalStorageService, WindowService) {
 
     var everPushedSomething = false,
         pixelratio = [1,1],
@@ -678,13 +678,18 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
         $scope.filterPreviewEnabled = true;
 
+        var progressToken = makeId();
+        startDownloadProgressPoll(progressToken);
+
         $http.get('./api/file/info?' + $httpParamSerializer({
             title: $scope.currentUrlParams.title,
             site: $scope.currentUrlParams.site,
             page: $scope.currentUrlParams.page,
+            progress: progressToken,
         }))
         .then(function(res) {
 
+            stopDownloadProgressPoll();
             $scope.busy = false;
 
             var response = res.data;
@@ -805,6 +810,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             }
 
         }, function(res) {
+            stopDownloadProgressPoll();
             $scope.metadata = null;
             $scope.error = responseError(res.data);
             $scope.busy = false;
@@ -1423,6 +1429,110 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
     };
 
+    function makeId() {
+        var bytes = new Uint8Array(20),
+            hex = '',
+            i;
+        if (window.crypto && window.crypto.getRandomValues) {
+            window.crypto.getRandomValues(bytes);
+        } else {
+            for (i = 0; i < bytes.length; i++) {
+                bytes[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        for (i = 0; i < bytes.length; i++) {
+            hex += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
+        }
+        return hex;
+    }
+
+    function stopDownloadProgressPoll() {
+        if ($scope.downloadProgressDelay) {
+            $timeout.cancel($scope.downloadProgressDelay);
+            $scope.downloadProgressDelay = null;
+        }
+        if ($scope.downloadProgressTimer) {
+            $interval.cancel($scope.downloadProgressTimer);
+            $scope.downloadProgressTimer = null;
+        }
+    }
+
+    // The /info request downloads the original, which for a very large scan
+    // can take minutes. Poll the download status so the loading screen can
+    // show a real progress bar instead of only a spinner. Polling only starts
+    // after a short delay: cached/small files load well before that, so they
+    // never touch the endpoint.
+    function startDownloadProgressPoll(token) {
+        stopDownloadProgressPoll();
+        $scope.downloadProgress = { uploaded: 0, filesize: 0 };
+        $scope.downloadProgressDelay = $timeout(function() {
+            $scope.downloadProgressDelay = null;
+            $scope.downloadProgressTimer = $interval(function() {
+                $http.get('./api/download-progress', { params: { token: token } }).then(function(res) {
+                    var p = res.data || {};
+                    $scope.downloadProgress.uploaded = Number(p.uploaded) || 0;
+                    $scope.downloadProgress.filesize = Number(p.filesize) || 0;
+                });
+            }, 500);
+        }, 400);
+    }
+
+    $scope.downloadProgressPercent = function() {
+        var p = $scope.downloadProgress;
+        if (!p || !p.filesize) {
+            return 0;
+        }
+        return Math.max(0, Math.min(100, Math.round(p.uploaded / p.filesize * 100)));
+    };
+
+    $scope.downloadProgressIndeterminate = function() {
+        var p = $scope.downloadProgress;
+        return !p || !p.filesize;
+    };
+
+    $scope.downloadProgressText = function() {
+        var p = $scope.downloadProgress;
+        if (!p || !p.filesize) {
+            return '';
+        }
+        var mb = function(bytes) {
+            return Math.round(bytes / 1048576);
+        };
+        return mb(p.uploaded) + ' / ' + mb(p.filesize) + ' MB';
+    };
+
+    function stopUploadProgressPoll() {
+        if ($scope.uploadProgressTimer) {
+            $interval.cancel($scope.uploadProgressTimer);
+            $scope.uploadProgressTimer = null;
+        }
+    }
+
+    function startUploadProgressPoll(token) {
+        stopUploadProgressPoll();
+        $scope.uploadProgress = { uploaded: 0, filesize: 0 };
+        $scope.uploadProgressTimer = $interval(function() {
+            $http.get('./api/upload-progress', { params: { token: token } }).then(function(res) {
+                var p = res.data || {};
+                $scope.uploadProgress.uploaded = Number(p.uploaded) || 0;
+                $scope.uploadProgress.filesize = Number(p.filesize) || 0;
+            });
+        }, 600);
+    }
+
+    $scope.uploadProgressPercent = function() {
+        var p = $scope.uploadProgress;
+        if (!p || !p.filesize) {
+            return 0;
+        }
+        return Math.max(0, Math.min(100, Math.round(p.uploaded / p.filesize * 100)));
+    };
+
+    $scope.uploadProgressIndeterminate = function() {
+        var p = $scope.uploadProgress;
+        return !p || !p.filesize;
+    };
+
     $scope.upload = function(isRetrying) {
 
         if ($scope.uploadBlockedByFilenameConflict()) {
@@ -1434,6 +1544,9 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
         $scope.error = '';
         $scope.allowIgnoreWarnings = false;
 
+        var progressToken = makeId();
+        startUploadProgressPoll(progressToken);
+
         var params = {
             title: $scope.currentUrlParams.title,
             site: $scope.currentUrlParams.site,
@@ -1443,7 +1556,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             filename: $scope.newTitle,
             elems: $scope.cropresults.page.elems,
             metadata: $scope.cropresults.page.metadata,
-            store: true
+            store: true,
+            progress: progressToken
         };
         if ($scope.overwrite == 'rename') {
             params.metadata = $scope.cropresults.page.metadata;
@@ -1459,6 +1573,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
 
             // console.log(response);
 
+            stopUploadProgressPoll();
             $scope.ladda2 = false;
             if (response.result === 'Success') {
                 $scope.uploadresults = response; //.imageinfo.descriptionurl;
@@ -1492,6 +1607,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
             }
 
         }, function(res) {
+            stopUploadProgressPoll();
             $scope.ladda2 = false;
             $scope.error = 'Upload failed! ' + responseError(res.data);
         });
@@ -1559,6 +1675,21 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$q', '$window', '$httpPar
     function newTitleExistsKey() {
         return $scope.currentUrlParams.site + ':' + $scope.newTitle;
     }
+
+    // Overwriting the original is only possible for single-page results of
+    // files that must not be replaced. realPagecount is the IFD/page count the
+    // backend verified, so a TIFF whose only extra "page" is an embedded
+    // preview counts as single-page.
+    $scope.overwriteDisabled = function() {
+        if (!$scope.cropresults) {
+            return true;
+        }
+        var page = $scope.cropresults.page || {};
+        return ($scope.cropresults.realPagecount || 0) > 1 ||
+            !!page.hasAssessmentTemplates ||
+            !!page.hasDoNotCropTemplate ||
+            !!page.hasUploadProtection;
+    };
 
     $scope.uploadBlockedByFilenameConflict = function() {
         return $scope.overwrite == 'rename' && $scope.exists[newTitleExistsKey()] === true && !$scope.confirmOverwrite;

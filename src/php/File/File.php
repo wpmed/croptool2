@@ -21,6 +21,11 @@ class File implements FileInterface
     protected $pathToJpegTran;
     protected $pathToDdjvu;
     protected $pathToGs;
+    protected $pathToConvert;
+
+    /** @var string|null JSON status file polled by the UI during fetch(). */
+    protected $progressFile;
+    protected $lastProgressWrite = 0.0;
 
 
     protected $supportedMimeTypes = [
@@ -42,8 +47,37 @@ class File implements FileInterface
         $this->pathToJpegTran = $config->get('jpegtranPath');
         $this->pathToDdjvu = $config->get('ddjvuPath');
         $this->pathToGs = $config->get('gsPath');
+        $this->pathToConvert = $config->get('convertPath', 'convert');
 
         $this->fileExt = $this->getFileExt($this->mime);
+    }
+
+    /**
+     * Report download progress into a JSON status file that the frontend
+     * polls while a large original is being fetched.
+     */
+    public function setProgressFile($path)
+    {
+        $this->progressFile = $path;
+    }
+
+    protected function writeDownloadProgress($downloaded, $total)
+    {
+        if (!$this->progressFile) {
+            return;
+        }
+        $now = microtime(true);
+        $finished = $total > 0 && $downloaded >= $total;
+        // Throttle: a progress callback fires constantly, and the file is
+        // only polled a few times per second.
+        if (!$finished && ($now - $this->lastProgressWrite) < 0.4) {
+            return;
+        }
+        $this->lastProgressWrite = $now;
+        @file_put_contents($this->progressFile, (string)json_encode([
+            'uploaded' => (int)$downloaded,
+            'filesize' => (int)$total,
+        ]));
     }
 
     public function getPublicDir()
@@ -98,17 +132,34 @@ class File implements FileInterface
 
     public function fetch()
     {
-        if ($this->exists()) {
+        $path = $this->getAbsolutePath();
+
+        // Check the file we actually download into (no page suffix).
+        // $this->exists() is not suitable here: page-aware subclasses
+        // (e.g. TiffFile) append a ".pageN" suffix even for page 0, which
+        // would make us re-download the original on every request.
+        if (file_exists($path)) {
             return;
         }
 
-        $path = $this->getAbsolutePath();
+        // Downloading a large original (e.g. a 400+ MB TIFF scan) takes longer
+        // than PHP's per-request execution limit, and the conversion that
+        // follows adds more. Lift the limit for the rest of this request.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(0);
+        }
 
         // Init
         $contentLength = -1;
         $fp = fopen($path, 'w');
         $ch = curl_init($this->url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);  // seconds
+
+        // Do not cap the total transfer time: a fixed cap aborts any download
+        // larger than what the current link can move within it. Instead bound
+        // the connection setup and abort only when the transfer stalls.
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_LOW_SPEED_LIMIT, 1);   // 1 byte/sec...
+        curl_setopt($ch, CURLOPT_LOW_SPEED_TIME, 60);   // ...for a full minute = dead peer
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
@@ -133,14 +184,32 @@ class File implements FileInterface
             }
         );
 
+        if ($this->progressFile) {
+            $this->writeDownloadProgress(0, max($contentLength, 0));
+            curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+            curl_setopt($ch, CURLOPT_XFERINFOFUNCTION,
+                function ($curl, $dltotal, $dlnow) use (&$contentLength) {
+                    // curl reports -1 until it knows the totals.
+                    $total = $dltotal > 0 ? $dltotal : max($contentLength, 0);
+                    $this->writeDownloadProgress($dlnow, $total);
+                    return 0;
+                }
+            );
+        }
+
         // Download file
-        curl_exec($ch);
+        $ok = curl_exec($ch);
+        $curlError = $ok === false ? curl_error($ch) : null;
 
         // Tidy up
         curl_close($ch);
         fclose($fp);
 
         $fsize = filesize($path);
+
+        if ($this->progressFile) {
+            $this->writeDownloadProgress($fsize, $contentLength > 0 ? $contentLength : $fsize);
+        }
 
         $this->logMsg("Fetched {$fsize} of {$contentLength} bytes from {$this->url}");
 
@@ -149,8 +218,9 @@ class File implements FileInterface
                 // Remove the partial download
                 unlink($path);
             }
+            $why = $curlError ? ' (' . $curlError . ')' : '';
             throw new \RuntimeException(
-                "Received only $fsize of $contentLength bytes from {$this->url} before the server closed the connection. " .
+                "Received only $fsize of $contentLength bytes from {$this->url}$why. " .
                 "Please retry in a moment."
             );
         }
@@ -174,6 +244,15 @@ class File implements FileInterface
         }
 
         return $this->getAbsolutePathForPage($pageno);
+    }
+
+    /**
+     * Page count verified from the local file, or null to keep the count
+     * reported by MediaWiki. Only page-aware subclasses override this.
+     */
+    public function getPageCount()
+    {
+        return null;
     }
 
     static public function readMetadata($path) {

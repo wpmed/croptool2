@@ -1,4 +1,6 @@
 {
+    "upload-progress-label": "Uploading",
+    "download-progress-label": "Downloading original file",
     "CropTool2": "CropTool2",
     "initial-loading": "Just a moment...",
     "logged-in": "Signed in as",
