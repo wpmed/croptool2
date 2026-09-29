@@ -27,7 +27,9 @@ class PdfFile extends File implements FileInterface
         $pdfFile = $this->getAbsolutePath();
         $jpgFile = $this->getAbsolutePathForPage($pageno);
 
-        Command::exec($this->pathToGs . ' -sDEVICE=jpeg -dNOPAUSE -dBATCH -dSAFER -dFirstPage={page} -dLastPage={page} -r300 -dUseCropBox -sOutputFile={dest} {src}', [
+        // The binary path is part of the template, so it has to be quoted here:
+        // exec() goes through a shell and "C:\Program Files\..." breaks on the space.
+        Command::exec(escapeshellarg($this->pathToGs) . ' -sDEVICE=jpeg -dNOPAUSE -dBATCH -dSAFER -dFirstPage={page} -dLastPage={page} -r300 -dUseCropBox -sOutputFile={dest} {src}', [
             'page' => $pageno,
             'src' => $pdfFile,
             'dest' => $jpgFile,
