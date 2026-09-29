@@ -143,24 +143,30 @@ class SvgFile extends File implements FileInterface
 
     public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
     {
-        if ( (int)$rotation !== 0 ) {
-           throw new RuntimeException( "Rotation not supported for SVGs" );
-        }
         if ($brightness != 0 || $contrast != 0 || $saturation != 0) {
            throw new RuntimeException( "Filters not supported for SVGs" );
         }
 
         $metadata = self::readMetadata( $srcPath );
 
-        $viewBoxHorizUnits = $metadata['viewBox'][2] / $metadata['width'];
-        $newViewBoxXOffset = $metadata['viewBox'][0] + $coords['x'] * $viewBoxHorizUnits;
-        $newViewBoxWidth = $coords['width'] * $viewBoxHorizUnits;
+        $transform = null;
 
-        $viewBoxVertUnits = $metadata['viewBox'][3] / $metadata['height'];
-        $newViewBoxYOffset = $metadata['viewBox'][1] + $coords['y'] * $viewBoxVertUnits;
-        $newViewBoxHeight = $coords['height'] * $viewBoxVertUnits;
+        if ( (float)$rotation != 0 ) {
+            // Rotating a vector image is a transform, not a pixel operation: the
+            // drawing is rotated about its centre exactly like the raster path
+            // does, and the crop rectangle of that is shown.
+            list( $newViewBox, $transform ) = self::rotatedGeometry( $metadata, $coords, $rotation );
+        } else {
+            $viewBoxHorizUnits = $metadata['viewBox'][2] / $metadata['width'];
+            $newViewBoxXOffset = $metadata['viewBox'][0] + $coords['x'] * $viewBoxHorizUnits;
+            $newViewBoxWidth = $coords['width'] * $viewBoxHorizUnits;
 
-        $newViewBox = "$newViewBoxXOffset $newViewBoxYOffset $newViewBoxWidth $newViewBoxHeight";
+            $viewBoxVertUnits = $metadata['viewBox'][3] / $metadata['height'];
+            $newViewBoxYOffset = $metadata['viewBox'][1] + $coords['y'] * $viewBoxVertUnits;
+            $newViewBoxHeight = $coords['height'] * $viewBoxVertUnits;
+
+            $newViewBox = "$newViewBoxXOffset $newViewBoxYOffset $newViewBoxWidth $newViewBoxHeight";
+        }
 
         $reader = self::getReader( $srcPath );
 
@@ -198,7 +204,13 @@ class SvgFile extends File implements FileInterface
                 $openingElm .= '>';
                 fwrite( $dest, $openingElm );
                 // The following may duplicate xmlns declarations, but that should be fine.
+                if ( $transform !== null ) {
+                    fwrite( $dest, '<g transform="' . htmlspecialchars( $transform, ENT_XML1 | ENT_QUOTES ) . '">' );
+                }
                 fwrite( $dest, $reader->readInnerXML() );
+                if ( $transform !== null ) {
+                    fwrite( $dest, '</g>' );
+                }
                 fwrite( $dest, $closingElm );
             } else {
                 // Most likely a doctype declaration.
@@ -210,8 +222,53 @@ class SvgFile extends File implements FileInterface
 
     }
 
+    /**
+     * Geometry for a rotated crop: the new viewBox and the transform that maps
+     * the original drawing onto it.
+     *
+     * The raster path rotates the whole image about its centre (Imagick expands
+     * the canvas to the rotated bounding box and centres the result in it) and
+     * then crops; this reproduces that in vector terms, so a straighten of an
+     * SVG matches what a straighten of the same drawing as a bitmap would give.
+     * Lengths are converted with the source's viewBox-to-pixel ratio, which
+     * assumes the viewBox scales uniformly (as the unrotated crop already does).
+     */
+    static public function rotatedGeometry( $metadata, $coords, $rotation ) {
+        $unitsPerPixel = $metadata['viewBox'][2] / $metadata['width'];
+
+        $sourceCentreX = $metadata['viewBox'][0] + $metadata['viewBox'][2] / 2;
+        $sourceCentreY = $metadata['viewBox'][1] + $metadata['viewBox'][3] / 2;
+
+        $rad = deg2rad( $rotation );
+        $canvasWidth = abs( $metadata['width'] * cos( $rad ) ) + abs( $metadata['height'] * sin( $rad ) );
+        $canvasHeight = abs( $metadata['height'] * cos( $rad ) ) + abs( $metadata['width'] * sin( $rad ) );
+        $canvasCentreX = $canvasWidth * $unitsPerPixel / 2;
+        $canvasCentreY = $canvasHeight * $unitsPerPixel / 2;
+
+        // translate( tx ty ) rotate( angle ) maps a point of the original onto
+        // the rotated canvas, shifted so the crop rectangle starts at the origin
+        // of the new viewBox.
+        $translateX = $canvasCentreX - $coords['x'] * $unitsPerPixel
+            - ( cos( $rad ) * $sourceCentreX - sin( $rad ) * $sourceCentreY );
+        $translateY = $canvasCentreY - $coords['y'] * $unitsPerPixel
+            - ( sin( $rad ) * $sourceCentreX + cos( $rad ) * $sourceCentreY );
+
+        $viewBox = '0 0 ' . self::svgNumber( $coords['width'] * $unitsPerPixel )
+            . ' ' . self::svgNumber( $coords['height'] * $unitsPerPixel );
+        $transform = 'translate(' . self::svgNumber( $translateX ) . ' ' . self::svgNumber( $translateY )
+            . ') rotate(' . self::svgNumber( $rotation ) . ')';
+
+        return [ $viewBox, $transform ];
+    }
+
+    static private function svgNumber( $value ) {
+        $rounded = round( (float)$value, 4 );
+        // Avoid "-0" in the output
+        return (string)( $rounded == 0 ? 0 : $rounded );
+    }
+
     public function supportsRotation() {
-        return false;
+        return true;
     }
 
     public function supportsFilters() {
