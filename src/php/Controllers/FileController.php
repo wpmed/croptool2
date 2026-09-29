@@ -312,6 +312,18 @@ class FileController
             if (in_array($newPage->site, $sitesSupportingExtractedFromTemplate)) {
                 $wikitext = $wikitext->appendExtractedFromTemplate($page->title);
             }
+
+            // The API query for the file returns only the non-hidden categories,
+            // which is the same set the interface offers. Per Commons:Categories
+            // the non-topical categories are the hidden ones.
+            $topicalCategories = array_diff(
+                $page->imageinfo->categories,
+                $this->deselectedOriginalCategories($page, $metadata)
+            );
+            if ($newPage->site == 'commons.wikimedia.org' && !count($topicalCategories)) {
+                $wikitext = $wikitext->addUncTemplate();
+            }
+
             $newPage->setWikitext($wikitext);
 
             $uploadResponse = $newPage->upload($cropPath, $editComment, $ignoreWarnings);

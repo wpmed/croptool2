@@ -152,7 +152,8 @@ class WikiText
 
     protected $patterns = array(
         'templates' => '{{\s*%NAMES%\s*%PARAMS%}} *',
-        'categories' => '\[\[category:%NAMES%\]\] *',
+        // A category can carry a sort key, e.g. [[Category:Foo|bar]].
+        'categories' => '\[\[category:%NAMES%(?:\|[^\]]*)?\]\] *',
     );
 
     /**
@@ -415,6 +416,20 @@ class WikiText
                 return preg_quote($category, '/');
             }, $categories)
         );
+    }
+
+    /**
+     * Prepends {{subst:unc}}, for a page that has no topical category left.
+     *
+     * Which categories count as topical is the caller's decision: the API query
+     * for the file returns only the non-hidden categories, and per
+     * Commons:Categories the non-topical categories are the hidden ones.
+     *
+     * @return WikiText
+     */
+    public function addUncTemplate()
+    {
+        return $this->prepend('{{subst:unc}}');
     }
 
     /**

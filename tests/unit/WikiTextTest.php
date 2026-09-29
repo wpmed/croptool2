@@ -289,6 +289,44 @@ WIKITEXT;
         $this->assertEquals($newText2, $wikitext);
     }
 
+    public function testItRemovesACategoryThatHasASortKey()
+    {
+        $oldText = '
+{{Information
+|description=Test
+}}
+
+[[Category:Coat of arms images|British Antarctic Territory]]
+[[Category:Keep me]]
+
+{{PD-self}}
+';
+
+        $wikitext = WikiText::make($oldText)
+            ->withoutCategories(['Coat of arms images']);
+
+        $this->assertStringNotContainsString('Coat of arms images', (string) $wikitext);
+        $this->assertStringContainsString('[[Category:Keep me]]', (string) $wikitext);
+    }
+
+    public function testItPrependsTheUncTemplate()
+    {
+        $wikitext = WikiText::make("{{PD-self}}\n")
+            ->addUncTemplate();
+
+        $this->assertStringStartsWith('{{subst:unc}}', (string) $wikitext);
+    }
+
+    public function testItPrependsTheUncTemplateWhenTheLastCategoryIsRemoved()
+    {
+        $wikitext = WikiText::make("{{PD-self}}\n[[Category:Coat of arms images|British Antarctic Territory]]\n")
+            ->withoutCategories(['Coat of arms images'])
+            ->addUncTemplate();
+
+        $this->assertStringStartsWith('{{subst:unc}}', (string) $wikitext);
+        $this->assertStringNotContainsString('Coat of arms images', (string) $wikitext);
+    }
+
 
     /**
      * This test also test that multibyte wikitext is handled correctly
