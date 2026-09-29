@@ -6,10 +6,11 @@ use pastuhov\Command\Command;
 
 class GifFile extends File implements FileInterface
 {
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation, $flipHorizontal = false, $flipVertical = false)
     {
         $dim = $coords['width'] . 'x' . $coords['height'] . '+' . $coords['x'] .'+' . $coords['y'] . '!';
         $rotate = $rotation ? '-rotate ' . intval($rotation) . ' +repage' : '';
+        $flip = ($flipHorizontal ? '-flop ' : '') . ($flipVertical ? '-flip ' : '');
 
         // Uses a color matrix instead of Imagick::modulateImage for saturation
         // to match the SVG feColorMatrix saturate preview used in the
@@ -20,7 +21,7 @@ class GifFile extends File implements FileInterface
         $colorMatrix = $saturation != 0 ? '-color-matrix {cm}' : '';
         $s = 1.0 + $saturation / 100.0;
 
-        Command::exec('convert {src} ' . $rotate . ' -crop {dim} -channel RGB -brightness-contrast {bc} ' . $colorMatrix . ' {dest}', [
+        Command::exec('convert {src} ' . $rotate . $flip . '-crop {dim} -channel RGB -brightness-contrast {bc} ' . $colorMatrix . ' {dest}', [
             'src' => $srcPath,
             'dest' => $destPath,
             'dim' => $dim,

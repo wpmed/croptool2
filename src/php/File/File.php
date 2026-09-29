@@ -187,13 +187,24 @@ class File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation, $flipHorizontal = false, $flipVertical = false)
     {
         $image = new Imagick($srcPath);
 
         $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
         if ($rotation) {
             $image->rotateImage(new \ImagickPixel('#00000000'), $rotation);
+            $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
+        }
+        // The mirror is applied to the rotated canvas, so that the crop region
+        // the client sends stays the region the user is looking at.
+        if ($flipHorizontal) {
+            $image->flopImage();  // mirror left-to-right
+        }
+        if ($flipVertical) {
+            $image->flipImage();  // mirror top-to-bottom
+        }
+        if ($flipHorizontal || $flipVertical) {
             $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
         }
         $image->cropImage($coords['width'], $coords['height'], $coords['x'], $coords['y']);

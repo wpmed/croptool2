@@ -217,7 +217,7 @@ window.CropToolAssetVersion = 'dev';
                      **************************************************************************************************** -->
                 <div ng-show="!cropresults" class="inner cropboxContainer">
 
-                    <img id="cropbox" ng-class="{imageloading: busy}" ct-cropper aspect-ratio="{{aspectratio_cxy}}" rotation="{{rotation.angle}}" on-crop="updateCoords($event.detail)" ng-src="{{metadata.thumb ? metadata.thumb.name : metadata.original.name}}" width="{{metadata.thumb ? metadata.thumb.width : metadata.original.width}}" height="{{metadata.thumb ? metadata.thumb.height : metadata.original.height}}">
+                    <img id="cropbox" ng-class="{imageloading: busy}" ct-cropper aspect-ratio="{{aspectratio_cxy}}" rotation="{{rotation.angle}}" flip-horizontal="{{rotation.flipHorizontal}}" flip-vertical="{{rotation.flipVertical}}" on-crop="updateCoords($event.detail)" ng-src="{{metadata.thumb ? metadata.thumb.name : metadata.original.name}}" width="{{metadata.thumb ? metadata.thumb.width : metadata.original.width}}" height="{{metadata.thumb ? metadata.thumb.height : metadata.original.height}}">
 
                     <button
                         type="button"
@@ -452,6 +452,14 @@ window.CropToolAssetVersion = 'dev';
                             <button type="button" class="btn btn-default orientation-btn" ng-click="rotateRight()" title="{{'cropform-rotate-right' | translate}}">
                                 <span ct-icon="redo"></span>
                                 <span class="sr-only" translate>cropform-rotate-right</span>
+                            </button>
+                            <button type="button" class="btn btn-default orientation-btn" ng-class="{active: rotation.flipHorizontal}" ng-click="flipHorizontal()" aria-pressed="{{rotation.flipHorizontal ? 'true' : 'false'}}" title="{{'cropform-flip-horizontal' | translate}}">
+                                <span ct-icon="flip-horizontal"></span>
+                                <span class="sr-only" translate>cropform-flip-horizontal</span>
+                            </button>
+                            <button type="button" class="btn btn-default orientation-btn" ng-class="{active: rotation.flipVertical}" ng-click="flipVertical()" aria-pressed="{{rotation.flipVertical ? 'true' : 'false'}}" title="{{'cropform-flip-vertical' | translate}}">
+                                <span ct-icon="flip-vertical"></span>
+                                <span class="sr-only" translate>cropform-flip-vertical</span>
                             </button>
                         </div>
                     </div>

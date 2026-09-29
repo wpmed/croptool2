@@ -44,10 +44,10 @@ class JpegFile extends File implements FileInterface
         ];
     }
 
-    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation)
+    public function crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation, $flipHorizontal = false, $flipVertical = false)
     {
         if ($method === 'precise') {
-            parent::crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation);
+            parent::crop($srcPath, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation, $flipHorizontal, $flipVertical);
             return;
         }
 
@@ -57,6 +57,16 @@ class JpegFile extends File implements FileInterface
 
         // Lossless
         $dim = $coords['width'] . 'x' . $coords['height'] . '+' . $coords['x'] .'+' . $coords['y'];
+
+        // Mirroring both ways is the same as a half turn, and folding it in saves
+        // a pass.
+        if ($flipHorizontal && $flipVertical) {
+            $rotation = ($rotation + 180) % 360;
+            $flipHorizontal = false;
+            $flipVertical = false;
+        }
+        $flipDirection = $flipHorizontal ? 'horizontal' : ($flipVertical ? 'vertical' : null);
+
         $rotate = '';
         if ($rotation) {
             if (!in_array($rotation, [90, 180, 270])) {
@@ -65,10 +75,23 @@ class JpegFile extends File implements FileInterface
 
             $rotate = '-rotate ' . $rotation;
         }
+
+        // jpegtran applies one transformation per run, so the mirror is a second
+        // pass over the cropped result.
+        $croppedPath = $flipDirection ? $destPath . '.flip.jpg' : $destPath;
         Command::exec($this->pathToJpegTran . ' -copy all ' . $rotate . ' -crop {dim} {src} > {dest}', [
             'src' => $srcPath,
-            'dest' => $destPath,
+            'dest' => $croppedPath,
             'dim' => $dim,
         ]);
+
+        if ($flipDirection) {
+            Command::exec($this->pathToJpegTran . ' -copy all -flip {direction} {src} > {dest}', [
+                'src' => $croppedPath,
+                'dest' => $destPath,
+                'direction' => $flipDirection,
+            ]);
+            @unlink($croppedPath);
+        }
     }
 }

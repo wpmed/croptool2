@@ -29,6 +29,8 @@
     "cropform-orientation": "Orientation",
     "cropform-rotate-left": "Rotate left",
     "cropform-rotate-right": "Rotate right",
+    "cropform-flip-horizontal": "Mirror left to right",
+    "cropform-flip-vertical": "Mirror top to bottom",
     "cropform-straighten": "Straighten",
     "cropform-straighten-auto": "Auto",
     "cropform-straighten-increase": "Increase straighten angle",
