@@ -39,10 +39,11 @@ window.CropToolCodexIcons = {
 // RTL shouldFlip rules from @wikimedia/codex-icons
 // Maps local icon name -> { flip: true, exceptions?: [...] }
 window.CropToolIconFlip = {
+    // undo/redo are only used for the rotate buttons here: rotating is an
+    // absolute operation, so the glyphs must not mirror in RTL. The buttons
+    // themselves follow the document direction.
     'copy': { flip: true },
     'cut': { flip: true },
     'link-external': { flip: true },
     'help-notice': { flip: true, exceptions: ['he', 'yi'] },
-    'undo': { flip: true },
-    'redo': { flip: true }
 };
