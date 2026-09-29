@@ -289,6 +289,46 @@ WIKITEXT;
         $this->assertEquals($newText2, $wikitext);
     }
 
+    public function testItSkipsAnImageThatIsAlreadyListedAsExtracted()
+    {
+        $oldText = '
+{{Information
+|other_versions={{Image extracted|HoryujiYumedono0363 edit1.jpg}}
+}}
+
+{{PD-self}}
+';
+
+        // Cropping the same image again overwrites the previous crop, so the
+        // name is already in the list and must not be added a second time.
+        $wikitext = WikiText::make($oldText)
+            ->appendImageExtractedTemplate('HoryujiYumedono0363 edit1.jpg');
+
+        $this->assertEquals($oldText, $wikitext);
+
+        // Same title, written the way a wikitext editor might write it.
+        $this->assertTrue($wikitext->listsExtractedImage('File:HoryujiYumedono0363_edit1.jpg'));
+        $this->assertFalse($wikitext->listsExtractedImage('HoryujiYumedono0363 edit2.jpg'));
+    }
+
+    public function testItSkipsAnImageAlreadyListedInAnotherExtractedTemplate()
+    {
+        $oldText = '
+{{Information
+|other_versions={{Image extracted|HoryujiYumedono0363 edit1.jpg}}
+}}
+
+{{Extracted images|My new file.jpg}}
+
+{{PD-self}}
+';
+
+        $wikitext = WikiText::make($oldText)
+            ->appendImageExtractedTemplate('My new file.jpg');
+
+        $this->assertEquals($oldText, $wikitext);
+    }
+
 
     /**
      * This test also test that multibyte wikitext is handled correctly

@@ -496,6 +496,12 @@ class WikiText
      */
     public function appendImageExtractedTemplate($name)
     {
+        // Cropping the same image again overwrites the previous crop, so the
+        // name is already there and must not be listed a second time.
+        if ($this->listsExtractedImage($name)) {
+            return $this;
+        }
+
         // If the page already contains a {{Image extracted}} template, append the file to it
         list($start, $length) = $this->search('{{\s*(extracted ?(images?|file|photo)?|image ?extracted|cropped version)\s*(\s*|\|[^\}]+)}}');
         if (!is_null($start)) {
@@ -514,6 +520,50 @@ class WikiText
         $tpl = '{{Image extracted|1=' . $name . '}}';
 
         return $this->appendTemplate($tpl);
+    }
+
+    /**
+     * Is this file already listed as an extracted image?
+     *
+     * Checks every {{Image extracted}} variant on the page, so a file that was
+     * added to one of them is never added to another either.
+     *
+     * @param string $name Name of the new file
+     * @return bool
+     */
+    public function listsExtractedImage($name)
+    {
+        $pattern = '/{{\s*(?:extracted ?(?:images?|file|photo)?|image ?extracted|cropped version)\s*(?:\s*|\|[^}]+)}}/i';
+        if (!preg_match_all($pattern, $this->text, $templates)) {
+            return false;
+        }
+
+        $needle = self::normalizeFileTitle($name);
+        foreach ($templates[0] as $template) {
+            preg_match_all('/\|\s*(?:[^=|\s]+=)?\s*([^|{}]+)/', $template, $arguments);
+            foreach ($arguments[1] as $argument) {
+                if (self::normalizeFileTitle($argument) === $needle) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Compare titles the way MediaWiki does: without a namespace prefix, with
+     * underscores as spaces, and with the first letter in upper case.
+     *
+     * @param string $title
+     * @return string
+     */
+    protected static function normalizeFileTitle($title)
+    {
+        $title = preg_replace('/^\s*(?:file|image)\s*:\s*/i', '', $title);
+        $title = str_replace('_', ' ', $title);
+
+        return ucfirst(trim(preg_replace('/\s+/', ' ', $title)));
     }
 
     protected function prepend($line)
