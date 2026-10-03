@@ -20,7 +20,7 @@ class GifFile extends File implements FileInterface
         $colorMatrix = $saturation != 0 ? '-color-matrix {cm}' : '';
         $s = 1.0 + $saturation / 100.0;
 
-        Command::exec('convert {src} ' . $rotate . ' -crop {dim} -channel RGB -brightness-contrast {bc} ' . $colorMatrix . ' {dest}', [
+        Command::exec($this->pathToConvert . ' {src} ' . $rotate . ' -crop {dim} -channel RGB -brightness-contrast {bc} ' . $colorMatrix . ' {dest}', [
             'src' => $srcPath,
             'dest' => $destPath,
             'dim' => $dim,

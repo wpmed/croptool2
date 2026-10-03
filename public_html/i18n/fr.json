@@ -2,6 +2,8 @@
 	"@metadata": {
 		"authors": []
 	},
+	"upload-progress-label": "Téléversement en cours",
+	"download-progress-label": "Téléchargement du fichier original en cours",
 	"app-language": "Langue",
 	"crop-dimensions": "Recadrage : {{width}}×{{height}} px.",
 	"cropform-aspect-ratio-free": "Libre",

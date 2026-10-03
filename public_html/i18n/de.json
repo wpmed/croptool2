@@ -2,6 +2,8 @@
 	"@metadata": {
 		"authors": []
 	},
+	"upload-progress-label": "Wird hochgeladen",
+	"download-progress-label": "Originaldatei wird heruntergeladen",
 	"CropTool2": "CropTool2",
 	"app-language": "Sprache",
 	"INVALID_COOKIE": "Deine Sitzung ist abgelaufen. Bitte autorisiere dich erneut.",

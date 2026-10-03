@@ -37,7 +37,14 @@ class Session implements SessionInterface
      */
     public function __invoke(Request $request, RequestHandler $handler)
     {
-        $this->startSession();
+        // The progress endpoints are polled while a long-running request
+        // (a large download or an upload) holds the session lock. Starting a
+        // session here would block the poll until that request finished, so
+        // skip it - these endpoints read a status file and need no session.
+        if (!preg_match('#/api/(?:upload|download)-progress$#', $request->getUri()->getPath())) {
+            $this->startSession();
+        }
+
         $response = $handler->handle($request);
 
         return $response;

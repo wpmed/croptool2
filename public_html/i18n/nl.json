@@ -6,6 +6,8 @@
 			"Siebrand"
 		]
 	},
+	"upload-progress-label": "Uploaden",
+	"download-progress-label": "Origineel bestand wordt gedownload",
 	"CropTool2": "CropTool2",
 	"initial-loading": "Een ogenblik...",
 	"logged-in": "Aangemeld als",
