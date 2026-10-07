@@ -147,6 +147,8 @@ class FileController
         $width = intval($request->getQueryParams()['width'] ?? 0);
         $height = intval($request->getQueryParams()['height'] ?? 0);
         $rotation = floatval($request->getQueryParams()['rotate'] ?? 0);
+        $flipHorizontal = (bool)intval($request->getQueryParams()['flipHorizontal'] ?? 0);
+        $flipVertical = (bool)intval($request->getQueryParams()['flipVertical'] ?? 0);
         $brightness = max(-100.0, min(100.0, floatval($request->getQueryParams()['brightness'] ?? 0)));
         $contrast = max(-100.0, min(100.0, floatval($request->getQueryParams()['contrast'] ?? 0)));
         $saturation = max(-100.0, min(100.0, floatval($request->getQueryParams()['saturation'] ?? 0)));
@@ -165,7 +167,7 @@ class FileController
         }
 
         $original = $editor->open($page->file, $pageno);
-        $crop = $original->crop($destPath, $cropMethod, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation);
+        $crop = $original->crop($destPath, $cropMethod, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation, $flipHorizontal, $flipVertical);
         $thumb = $crop->thumb($thumbPath);
 
         $logger->info('[{sha1}] Cropped using {method} mode', [
@@ -198,6 +200,12 @@ class FileController
         $dim[] = ($cropPercentXY ?: ' < 1') . '% areawise';
         if ($rotation) {
             $dim[] = "rotated {$rotation}°";
+        }
+        if ($flipHorizontal) {
+            $dim[] = 'mirrored left to right';
+        }
+        if ($flipVertical) {
+            $dim[] = 'mirrored top to bottom';
         }
         if ($brightness != 0) {
             $dim[] = "brightness {$brightness}";

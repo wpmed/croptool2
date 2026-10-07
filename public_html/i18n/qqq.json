@@ -34,6 +34,8 @@
 	"cropform-orientation": "Section heading for the rotate-left/rotate-right buttons in the crop form.",
 	"cropform-rotate-left": "Tooltip and screen-reader label for the button that rotates the image 90° counter-clockwise.",
 	"cropform-rotate-right": "Tooltip and screen-reader label for the button that rotates the image 90° clockwise.",
+	"cropform-flip-horizontal": "Tooltip and screen-reader label for the button that mirrors the image left to right.",
+	"cropform-flip-vertical": "Tooltip and screen-reader label for the button that mirrors the image top to bottom.",
 	"cropform-straighten": "Label for the straighten/deskew angle slider and number input in the crop form.",
 	"cropform-straighten-auto": "Tooltip and screen-reader label for the button that automatically detects and applies a straighten angle.",
 	"cropform-straighten-increase": "Tooltip and screen-reader label for the button that increases the straighten angle by 0.1°.",
