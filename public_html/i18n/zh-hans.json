@@ -4,6 +4,8 @@
 			"GuoPC"
 		]
 	},
+	"upload-progress-label": "正在上传",
+	"download-progress-label": "正在下载原始文件",
 	"CropTool2": "裁剪工具2",
 	"initial-loading": "请稍等…",
 	"logged-in": "登录为",
