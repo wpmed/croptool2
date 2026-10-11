@@ -11,6 +11,14 @@
 
 // Icon SVG paths keyed by local name
 window.CropToolCodexIcons = {
+    // File:Flip Vertical (61567) - The Noun Project.svg (CC0, Icons8 via the Noun
+    // Project; no attribution required). The artwork is on a 24x24 grid and has
+    // more white around it than the box wants, so it is fitted onto the 20x20 grid
+    // with half a unit to spare. The second one is the same glyph turned a quarter
+    // turn.
+    'flip-horizontal': '<g transform="translate(-1.419 -1.4) scale(0.95)"><path d="M9,10.3V20H4L9,10.3 M11,2L2.2,19.2C1.6,20.5,2.6,22,4,22h7V2L11,2z"/><path d="M13,22h7c1.5,0,2.4-1.5,1.8-2.8L13,2V22z"/></g>',
+    'flip-vertical': '<g transform="rotate(90 10 10) translate(-1.419 -1.4) scale(0.95)"><path d="M9,10.3V20H4L9,10.3 M11,2L2.2,19.2C1.6,20.5,2.6,22,4,22h7V2L11,2z"/><path d="M13,22h7c1.5,0,2.4-1.5,1.8-2.8L13,2V22z"/></g>',
+
     'user-anonymous': '<path d="M13.5 13.5a2.5 2.5 0 11-2.29 3.5H8.79A2.499 2.499 0 014 16a2.5 2.5 0 014.79-1h2.42a2.5 2.5 0 012.29-1.5M15 7.086l3.207 3.207L17.5 12h-15l-.707-1.707L5 7.086V2h10zm-8 .828L4.914 10h10.172L13 7.914V4H7z"/>',
     'user-active': '<path d="M12 11a6 6 0 016 6v2H2v-2a6 6 0 016-6zM10 1a4 4 0 110 8 4 4 0 010-8"/>',
     'search-regular-expression': '<path d="M17.864 2.797a15 15 0 01-.392 15.234l-.624 1-1.695-1.061.623-.998a13 13 0 00.34-13.203l-.99-1.784 1.748-.97zM4.848 2.03l-.624.998a13 13 0 00-.34 13.203l.99 1.784-1.748.97-.99-1.782A15 15 0 012.528 1.97l.625-1zM8 16H6v-2h2zm3.995-8.709L14 6.134l1 1.732-2 1.155 1.928 1.113-1 1.732-1.93-1.115.001 2.248-1.999.002-.002-2.248-1.927 1.113-1-1.732L9 9.02 7 7.866l1-1.732 1.995 1.152V5.001l2-.002z"/>',

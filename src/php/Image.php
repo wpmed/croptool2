@@ -172,9 +172,11 @@ class Image
      * @param $brightness
      * @param $contrast
      * @param $saturation
+     * @param $flipHorizontal
+     * @param $flipVertical
      * @return Image
      */
-    public function crop($destPath, $method, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation)
+    public function crop($destPath, $method, $x, $y, $width, $height, $rotation, $brightness, $contrast, $saturation, $flipHorizontal = false, $flipVertical = false)
     {
         if (file_exists($destPath)) {
             unlink($destPath);
@@ -184,7 +186,7 @@ class Image
         $coords = $this->getCropCoordinates($x, $y, $width, $height, $rotation);
 
         try {
-            $this->file->crop($this->path, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation);
+            $this->file->crop($this->path, $destPath, $method, $coords, $rotation, $brightness, $contrast, $saturation, $flipHorizontal, $flipVertical);
         } catch (ImagickException $e) {
             throw new \RuntimeException(
                 self::imagickFailureMessage($this->width, $this->height, $rotation, $e->getMessage()),

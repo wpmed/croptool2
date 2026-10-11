@@ -4,6 +4,8 @@
 			"Toliño"
 		]
 	},
+	"upload-progress-label": "Subindo",
+	"download-progress-label": "Descargando o ficheiro orixinal",
 	"CropTool2": "CropTool2",
 	"initial-loading": "Un momento...",
 	"logged-in": "Sesión iniciada como",

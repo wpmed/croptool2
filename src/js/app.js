@@ -136,7 +136,9 @@ directive('ctCropper', ['$timeout', function($timeout) {
         scope: {
             onCrop: '&',
             aspectRatio: '@',
-            rotation: '@'
+            rotation: '@',
+            flipHorizontal: '@',
+            flipVertical: '@'
         },
         link: function(scope, element) {
             var layoutRetry,
@@ -147,6 +149,8 @@ directive('ctCropper', ['$timeout', function($timeout) {
             });
             element.bind('$destroy', destroy);
             scope.$watch('rotation', rotationChanged);
+            scope.$watch('flipHorizontal', flipsChanged);
+            scope.$watch('flipVertical', flipsChanged);
             scope.$on('crop-aspect-ratio-changed', aspectRatioChanged);
             scope.$on('crop-input-changed', cropInputChanged);
 
@@ -172,6 +176,7 @@ directive('ctCropper', ['$timeout', function($timeout) {
                     dragMode: window.matchMedia('(pointer: coarse), (max-width: 600px)').matches ? 'move' : 'crop',
                     minCropBoxWidth: 44,
                     minCropBoxHeight: 44,
+                    scalable: true,
                     responsive: true,
                     restore: true,
                     toggleDragModeOnDblclick: false,
@@ -179,6 +184,7 @@ directive('ctCropper', ['$timeout', function($timeout) {
 
                     // Needed to apply filters when re-initializing cropper.
                     ready: function() {
+                        applyFlips();
                         scope.$emit('cropper-ready');
                     },
 
@@ -228,6 +234,22 @@ directive('ctCropper', ['$timeout', function($timeout) {
                         scope.cropper.setData(data);
                     }
                 }
+            }
+            function flipValue(value) {
+                return value === true || value === 'true' || value === '1';
+            }
+            function flipsChanged() {
+                // Mirroring is a transform on the canvas, so the crop box the user
+                // draws stays the box that gets sent to the server: Cropper.js
+                // reports it relative to the canvas as displayed.
+                applyFlips();
+            }
+            function applyFlips() {
+                if (!scope.cropper) {
+                    return;
+                }
+                scope.cropper.scaleX(flipValue(scope.flipHorizontal) ? -1 : 1);
+                scope.cropper.scaleY(flipValue(scope.flipVertical) ? -1 : 1);
             }
             function rotationChanged(rotation) {
                 if (scope.cropper) {
@@ -673,7 +695,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
         if ($scope.preRotationCropmethod) {
             $scope.cropmethod = $scope.preRotationCropmethod;
         }
-        $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0, straightenAngleText: '0'};
+        $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0, straightenAngleText: '0', flipHorizontal: false, flipVertical: false};
         $scope.preRotationCropmethod = null;
         $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
         $scope.filterPreviewEnabled = true;
@@ -951,7 +973,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
     };
 
     $scope.orientationActive = function() {
-        return normalizedRightRotation() !== 0 || $scope.straightenActive();
+        return normalizedRightRotation() !== 0 || $scope.straightenActive()
+            || !!$scope.rotation.flipHorizontal || !!$scope.rotation.flipVertical;
     };
 
     $scope.previewWidth = function() {
@@ -1020,6 +1043,20 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
         updateRotationAngle();
     };
 
+    $scope.flipHorizontal = function() {
+        if (!$scope.metadata || !$scope.metadata.supportsRotation) {
+            return;
+        }
+        $scope.rotation.flipHorizontal = !$scope.rotation.flipHorizontal;
+        updateRotationAngle();
+    };
+    $scope.flipVertical = function() {
+        if (!$scope.metadata || !$scope.metadata.supportsRotation) {
+            return;
+        }
+        $scope.rotation.flipVertical = !$scope.rotation.flipVertical;
+        updateRotationAngle();
+    };
     $scope.straightenChanged = function() {
         updateRotationAngle();
     };
@@ -1222,6 +1259,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
     $scope.resetOrientation = function() {
         $scope.rotation.rightAngle = 0;
         $scope.rotation.straightenAngle = 0;
+        $scope.rotation.flipHorizontal = false;
+        $scope.rotation.flipVertical = false;
         updateRotationAngle();
     };
 
@@ -1521,6 +1560,8 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
             x: $scope.crop_dim.x,
             y: $scope.crop_dim.y,
             rotate: $scope.crop_dim.rotate,
+            flipHorizontal: $scope.rotation.flipHorizontal ? 1 : 0,
+            flipVertical: $scope.rotation.flipVertical ? 1 : 0,
             width: $scope.crop_dim.w,
             height: $scope.crop_dim.h,
             brightness: $scope.filters.brightness,
@@ -1859,7 +1900,7 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
     $scope.aspectratio_cy = LocalStorageService.get('croptool-aspectratio-y') || '9';;
     $scope.aspectratio_value = parseFloat(LocalStorageService.get('croptool-aspectratio-value')) || null;
     $scope.overwrite = 'rename';
-    $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0, straightenAngleText: '0'};
+    $scope.rotation = {angle: 0, rightAngle: 0, straightenAngle: 0, straightenAngleText: '0', flipHorizontal: false, flipVertical: false};
     $scope.preRotationCropmethod = null;
     $scope.filters = {brightness: 0, contrast: 0, saturation: 0};
     $scope.filterPreviewEnabled = true;

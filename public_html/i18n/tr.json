@@ -1,9 +1,12 @@
 {
 	"@metadata": {
 		"authors": [
+			"Efygz",
 			"Hedda"
 		]
 	},
+	"upload-progress-label": "Yükleniyor",
+	"download-progress-label": "Özgün dosya indiriliyor",
 	"CropTool2": "CropTool2",
 	"initial-loading": "Bir dakika lütfen...",
 	"logged-in": "Şu kullanıcı adıyla oturum açıldı:",
@@ -35,17 +38,17 @@
 	"cropform-rotate-left": "Sola döndür",
 	"cropform-rotate-right": "Sağa döndür",
 	"cropform-straighten": "Düzelt",
-	"cropform-straighten-auto": "Oto",
-	"cropform-straighten-increase": "Düzeltme açısını artırın",
-	"cropform-straighten-decrease": "Düzeltme açısını azaltın",
-	"cropform-orientation-reset": "Yönlendirmeyi sıfırlayın",
+	"cropform-straighten-auto": "Otomatik",
+	"cropform-straighten-increase": "Düzeltme açısını artır",
+	"cropform-straighten-decrease": "Düzeltme açısını azalt",
+	"cropform-orientation-reset": "Yönlendirmeyi sıfırla",
 	"cropform-crop": "Kırp",
 	"left": "Sol",
 	"top": "Üst",
 	"width": "Genişlik",
 	"height": "Yükseklik",
-	"cropform-value-increase": "Değeri artırın",
-	"cropform-value-decrease": "Değeri azaltın",
+	"cropform-value-increase": "Değeri artır",
+	"cropform-value-decrease": "Değeri azalt",
 	"page": "Sayfa",
 	"cropform-method": "Kırpma yöntemi",
 	"cropform-method-precise": "Tam",
