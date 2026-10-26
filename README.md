@@ -82,7 +82,7 @@ Note that you should be able to login and preview cropping without waiting for t
 ### Deployment notes
 
 * `ssh tools-login.wmflabs.org`
-* `become croptool`
+* `become croptool2`
 * `toolforge build start https://github.com/wpmed/croptool2`
 * `toolforge webservice restart`
 
