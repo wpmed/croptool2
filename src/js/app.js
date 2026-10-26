@@ -362,10 +362,11 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
         setSelectCalled = false,
         labelFallbackLanguages = ['en', 'mul', 'de', 'fr', 'nl', 'es'],
         descriptionFallbackLanguages = ['en', 'de', 'fr', 'nl', 'es'],
-        rtlLanguages = ['ar', 'arc', 'arz', 'azb', 'ckb', 'dv', 'fa', 'he', 'khw', 'ks', 'ku', 'mzn', 'ps', 'sd', 'ug', 'ur', 'yi'];
+        rtlLanguages = ['ar', 'arc', 'arz', 'azb', 'ckb', 'dv', 'fa', 'he', 'khw', 'ks', 'ku', 'mzn', 'ps', 'sd','skr-arab', 'ug', 'ur', 'yi'];
 
     $scope.availableLanguages = [
         { code: 'en', label: 'English' },
+	{ code: 'ar', label: 'العربية' },
         { code: 'az', label: 'Azərbaycanca' },
         { code: 'da', label: 'Dansk' },
         { code: 'de', label: 'Deutsch' },
@@ -383,8 +384,10 @@ controller('AppCtrl', ['$scope', '$http', '$timeout', '$interval', '$q', '$windo
         { code: 'ps', label: 'پښتو' },
         { code: 'ru', label: 'Русский' },
         { code: 'sk', label: 'Slovenčina' },
+	{ code: 'skr-arab', label: 'سرائیکی' },
         { code: 'sv', label: 'Svenska' },
         { code: 'tr', label: 'Türkçe' },
+	{ code: 'uk', label: 'українська' },
         { code: 'zh-hans', label: '中文（简体）' },
         { code: 'zh-hant', label: '中文（繁體）' },
         { code: 'zh', label: '中文' }
