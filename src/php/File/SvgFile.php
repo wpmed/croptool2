@@ -51,14 +51,18 @@ class SvgFile extends File implements FileInterface
     static private function getReader( $path ) {
         // This is based on MediaWiki SVGReader class.
         $reader = new XMLReader();
-        // Need entity loader to open the file in the first place.
-        @libxml_disable_entity_loader( false );
+        if (PHP_VERSION_ID < 80000) {
+            // Need entity loader to open the file in the first place.
+            libxml_disable_entity_loader( false );
+        }
         $res = $reader->open( $path, null, LIBXML_NOERROR | LIBXML_NOWARNING );
         if ( !$res ) {
             throw new RuntimeException( "Invalid SVG" );
         }
-        // This is very important on php < 8 but is deprecated on php 8.
-        @libxml_disable_entity_loader( true );
+        if (PHP_VERSION_ID < 80000) {
+            // Very important on php < 8, where the loader is enabled by the call above.
+            libxml_disable_entity_loader( true );
+        }
         $reader->setParserProperty( XMLReader::SUBST_ENTITIES, true );
         return $reader;
     }
