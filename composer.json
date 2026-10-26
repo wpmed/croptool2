@@ -2,7 +2,7 @@
     "name": "wpmed/croptool2",
     "description": "Tool for cropping images at Wikimedia sites",
     "require": {
-        "php": "~8.2",
+        "php": "~8.4",
         "ext-exif": "*",
         "ext-imagick": "*",
         "ext-curl": "*",
