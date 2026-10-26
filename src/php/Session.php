@@ -17,12 +17,23 @@ class Session implements SessionInterface
 
     protected function startSession()
     {
+        // A request handled earlier in the same process may have started it
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
+
         // If the configured hostname includes a port, we need to remove it
         $cookieDomain = $this->config->getCookieDomain();
         $secureCookies = filter_var($this->config->get('secureCookies', true), FILTER_VALIDATE_BOOLEAN);
 
-        session_name($this->config->get('sessionName'));
-        session_set_cookie_params(0, $this->config->get('basepath'), $cookieDomain, $secureCookies, true);
+        session_name((string) $this->config->get('sessionName'));
+        session_set_cookie_params(
+            0,
+            (string) $this->config->get('basepath'),
+            $cookieDomain,
+            $secureCookies,
+            true
+        );
         session_start();
     }
 

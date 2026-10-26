@@ -4,7 +4,7 @@ namespace CropTool\Errors;
 
 class FileNotFoundException extends \RuntimeException
 {
-    public function __construct($message = null, $code = 0, \Exception $previous = null, $path = null)
+    public function __construct($message = null, $code = 0, ?\Exception $previous = null, $path = null)
     {
         if (null === $message) {
             if (null === $path) {

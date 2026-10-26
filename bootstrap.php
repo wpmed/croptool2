@@ -99,7 +99,7 @@ $builder->addDefinitions(ROOT_PATH . '/container.php');
 $container = $builder->build();
 
 $app = App::create($container);
-$basePath = rtrim($container->get(\CropTool\Config::class)->get('basepath'), '/');
+$basePath = rtrim((string) $container->get(\CropTool\Config::class)->get('basepath'), '/');
 if ($basePath !== '') {
     $app->setBasePath($basePath);
 }

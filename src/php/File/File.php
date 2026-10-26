@@ -290,7 +290,7 @@ class File implements FileInterface
         if ($flipHorizontal || $flipVertical) {
             $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
         }
-        $image->cropImage($coords['width'], $coords['height'], $coords['x'], $coords['y']);
+        $image->cropImage((int) $coords['width'], (int) $coords['height'], (int) $coords['x'], (int) $coords['y']);
         $image->setImagePage(0, 0, 0, 0);  // Reset virtual canvas, like +repage
 
         // Apply brightness/contrast to RGB channels only, not alpha

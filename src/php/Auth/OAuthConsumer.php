@@ -77,7 +77,7 @@ class OAuthConsumer implements AuthServiceInterface
         $this->cookieKey = $this->loadEncryptionKeyFromConfig($keyFile);
         $this->callbackUrl = $config->get('scheme', 'https') . '://' .
             $config->get('hostname') .
-            rtrim($this->basepath, '/') . '/api/auth/callback';
+            rtrim((string) $this->basepath, '/') . '/api/auth/callback';
 
         // Load the user token (request or access) from the session
         $this->gTokenKey = $config->get('accessToken', '');
@@ -287,8 +287,10 @@ class OAuthConsumer implements AuthServiceInterface
                 throw new \RuntimeException('Unable to sign using the private key file.');
             }
 
-            // Release the key resource
-            openssl_free_key($privateKey);
+            // Key objects are released automatically since PHP 8.0
+            if (PHP_VERSION_ID < 80000) {
+                openssl_free_key($privateKey);
+            }
 
             return base64_encode($signature);
         } else {
